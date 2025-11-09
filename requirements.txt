@@ -1,0 +1,22 @@
+# For interacting with APIs
+requests
+python-dotenv
+
+# For finding trending topics
+pytrends
+
+# For video creation
+moviepy==1.0.3
+Pillow==9.5.0
+imageio-ffmpeg==0.4.9
+
+# For AI image generation
+bing-image-creator-api
+
+# For YouTube upload
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib
+
+# For Text-to-Speech
+pyttsx3
