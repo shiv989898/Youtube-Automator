@@ -20,6 +20,7 @@ google-auth-oauthlib
 
 # For Text-to-Speech
 pyttsx3
+edge-tts==7.2.3
 
 # For Gemini API
 google-generativeai
