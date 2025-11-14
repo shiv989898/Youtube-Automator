@@ -1,0 +1,57 @@
+name: YouTube Shorts Automation
+
+on:
+  schedule:
+    # Runs every 6 hours (4 times a day) at 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allows manual triggering from GitHub Actions tab
+
+jobs:
+  generate-and-upload:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    
+    - name: Install Python dependencies
+      run: |
+        pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Create .env file with secrets
+      run: |
+        echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
+        echo "PEXELS_API_KEY=${{ secrets.PEXELS_API_KEY }}" >> .env
+        echo "PIXABAY_API_KEY=${{ secrets.PIXABAY_API_KEY }}" >> .env
+        echo "YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }}" >> .env
+    
+    - name: Set up YouTube credentials
+      run: |
+        echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
+        echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
+    
+    - name: Run YouTube Shorts generation
+      run: python main.py
+      env:
+        PYTHONUNBUFFERED: 1
+    
+    - name: Upload artifacts (if needed for debugging)
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs
+        path: |
+          *.log
+          *.txt
