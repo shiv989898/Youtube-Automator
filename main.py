@@ -28,26 +28,29 @@ def main():
     script = script_generator.generate_script(topic)
     print(f"Script:\n{script}")
 
-    # Clean the script for the voiceover
-    narrator_lines = []
-    for line in script.split('\n'):
-        if line.strip().startswith('**Host:**'):
-            cleaned_line = line.replace('**Host:**', '').strip()
-            # Remove any remaining formatting like asterisks
-            cleaned_line = re.sub(r'\*', '', cleaned_line)
-            if cleaned_line:
-                narrator_lines.append(cleaned_line)
+    # Clean the script for the voiceover by removing cues and extra formatting
+    # Remove introductory lines like "Here's a 60-second YouTube Short script on..."
+    cleaned_script = re.sub(r"^(Here's|Here is).*?script.*?:\s*", '', script, flags=re.IGNORECASE)
+    # Remove scene descriptions in parentheses or double asterisks
+    cleaned_script = re.sub(r'\*\*\(Scene:.*?\)\*\*|\(Scene:.*?\)','', cleaned_script)
+    # Remove **Host:** markers and all parenthetical notes
+    cleaned_script = re.sub(r'\*\*Host:\*\*|\*\*|\(.*?\)','', cleaned_script).strip()
+    # Remove word count and timing information (e.g., "Word Count: 78 words", "Estimated Speaking Time: 30-35 seconds")
+    cleaned_script = re.sub(r'(---|\*\*)?(\n)?(Word Count:.*?|Estimated Speaking Time:.*?)(\n)?', '', cleaned_script, flags=re.IGNORECASE)
+    # Remove any triple dashes or separators
+    cleaned_script = re.sub(r'---+', '', cleaned_script)
+    # Remove any extra newlines or whitespace
+    cleaned_script = " ".join(cleaned_script.split())
     
-    narrator_script = " ".join(narrator_lines)
-    
-    if not narrator_script:
+    if not cleaned_script:
         print("Could not extract any narrator lines from the script. Exiting.")
         return
 
-    print(f"Cleaned script for voiceover:\n{narrator_script}")
+    print(f"Cleaned script for voiceover:\n{cleaned_script}")
 
     print("Generating voiceover...")
-    voiceover_file = voiceover.create_voiceover(narrator_script, "voiceover.mp3")
+    voiceover.generate_voiceover("voiceover.mp3", cleaned_script)
+    voiceover_file = "voiceover.mp3"
     print(f"Voiceover saved to {voiceover_file}")
 
     print("Finding background music...")
@@ -66,18 +69,18 @@ def main():
         return
 
     print("Creating video...")
-    video_creator.create_video(visual_files, voiceover_file, "final_video.mp4", music_file)
+    video_creator.create_video(visual_files, voiceover_file, "final_video.mp4", music_file, cleaned_script)
     print("Video created successfully: final_video.mp4")
 
     print("Uploading to YouTube...")
     video_id = youtube_uploader.upload_to_youtube(
         "final_video.mp4",
-        f"YouTube Short about {topic}",
-        f"A short video about {topic}. #shorts #{topic.replace(' ', '')}",
-        ["shorts", topic]
+        topic,
+        cleaned_script
     )
     if video_id:
         print(f"Upload successful! Video ID: {video_id}")
+        print(f"Watch at: https://youtube.com/shorts/{video_id}")
     else:
         print("Upload failed.")
 
