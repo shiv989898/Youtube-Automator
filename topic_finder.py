@@ -6,38 +6,90 @@ def get_trending_topic():
     Gets a trending topic from a predefined list.
     """
     fallback_topics = [
+        # Science & Technology
         "The Future of Artificial Intelligence", "Mysteries of the Deep Ocean",
-        "The World's Most Amazing Architecture", "The Science of Sleep & Dreams",
-        "A History of Video Games", "Secrets of the Amazon Rainforest",
-        "The Evolution of Music Genres", "The Psychology of Happiness",
-        "Exploring Ancient Civilizations", "The Science Behind Superheroes",
-        "Incredible Animal Migrations", "The Magic of Movie Special Effects",
-        "The Rise and Fall of the Roman Empire", "Understanding Black Holes",
-        "The Art of Storytelling", "The World's Strangest Foods",
-        "The Power of Renewable Energy", "The History of the Internet",
-        "Life on Mars: What Would It Take?", "The Philosophy of Stoicism",
-        "The Mystery of the Bermuda Triangle", "How Cryptocurrencies Work",
-        "The Secrets of Ancient Egypt", "The Science of Climate Change",
-        "The World's Most Dangerous Animals", "The Future of Space Exploration",
-        "The Hidden History of Lost Civilizations", "The Psychology of Social Media",
-        "The Science of Time Travel", "The World's Most Beautiful Natural Wonders",
-        "The Evolution of Human Language", "The Mystery of Dark Matter",
-        "The Art of Meditation and Mindfulness", "The History of Photography",
-        "The Science of Memory and Learning", "The World's Most Extreme Weather",
-        "The Future of Virtual Reality", "The Secrets of the Universe",
-        "The Psychology of Fear and Phobias", "The History of Ancient Rome",
-        "The Science Behind Lightning", "The World's Most Intelligent Animals",
-        "The Evolution of Transportation", "The Mystery of Consciousness",
-        "The Art of Creative Writing", "The History of Ancient Greece",
-        "The Science of Earthquakes and Volcanoes", "The World's Rarest Gemstones",
-        "The Future of Robotics and Automation", "The Secrets of Quantum Physics",
-        "The Psychology of Motivation", "The History of Ancient China",
-        "The Science of Ocean Currents", "The World's Most Innovative Inventions",
-        "The Evolution of Computers", "The Mystery of UFOs and Aliens",
-        "The Art of Public Speaking", "The History of World War II",
-        "The Science of Genetics and DNA", "The World's Most Haunted Places",
-        "The Future of Medicine and Healthcare", "The Secrets of the Human Brain",
-        "The Psychology of Love and Relationships", "The History of Ancient India"
+        "Understanding Black Holes", "The Science Behind Superheroes",
+        "How Quantum Computers Work", "The Truth About 5G Technology",
+        "The Science of Time Travel", "The Mystery of Dark Matter",
+        "The Future of Space Exploration", "The Secrets of Quantum Physics",
+        "The Science Behind Lightning", "How Cryptocurrencies Really Work",
+        "The Evolution of Computers", "The Future of Virtual Reality",
+        "The Science of Genetics and DNA", "The Mystery of Consciousness",
+        "The Future of Robotics", "The Truth About Parallel Universes",
+        "How AI Will Change Everything", "The Science of Teleportation",
+        
+        # Nature & Animals
+        "Secrets of the Amazon Rainforest", "Incredible Animal Migrations",
+        "The World's Most Dangerous Animals", "The World's Most Intelligent Animals",
+        "The World's Most Beautiful Natural Wonders", "Amazing Animal Superpowers",
+        "The Deadliest Creatures on Earth", "How Animals Survive Extreme Conditions",
+        "The Secret Life of Whales", "The Most Venomous Snakes Alive",
+        "Why Octopuses Are So Intelligent", "The Fastest Animals on Earth",
+        "How Birds Navigate Thousands of Miles", "The World's Rarest Animals",
+        "Why Cats Always Land on Their Feet", "The Secret Language of Dolphins",
+        
+        # History & Culture
+        "The Secrets of Ancient Egypt", "The Rise and Fall of the Roman Empire",
+        "Exploring Ancient Civilizations", "The History of Ancient Rome",
+        "The History of Ancient Greece", "The History of Ancient China",
+        "The History of Ancient India", "The Mystery of the Bermuda Triangle",
+        "The Hidden History of Lost Civilizations", "The History of World War II",
+        "The Truth About the Pyramids", "How Vikings Really Lived",
+        "The Mystery of Stonehenge", "The Fall of the Mayan Civilization",
+        "The Real Story of Cleopatra", "How Ancient Rome Fell Apart",
+        "The Secrets of Samurai Warriors", "The Truth About Medieval Knights",
+        
+        # Psychology & Mind
+        "The Psychology of Happiness", "The Science of Sleep & Dreams",
+        "The Psychology of Social Media", "The Psychology of Fear and Phobias",
+        "The Psychology of Motivation", "The Psychology of Love and Relationships",
+        "The Science of Memory and Learning", "The Art of Meditation and Mindfulness",
+        "The Secrets of the Human Brain", "Why We Procrastinate",
+        "The Science of First Impressions", "How to Read Body Language",
+        "Why We Get Deja Vu", "The Truth About Multitasking",
+        "How Your Brain Creates Reality", "The Psychology of Success",
+        
+        # Space & Universe
+        "Life on Mars: What Would It Take?", "The Secrets of the Universe",
+        "The Mystery of Dark Energy", "How the Universe Will End",
+        "What's Inside a Black Hole", "The Truth About Wormholes",
+        "How Stars Are Born and Die", "The Biggest Things in the Universe",
+        "Could We Live on Other Planets", "The Mystery of Alien Life",
+        "What Happens When Galaxies Collide", "The Truth About Time Dilation",
+        
+        # Technology & Innovation
+        "The Evolution of Music Genres", "A History of Video Games",
+        "The Magic of Movie Special Effects", "The History of the Internet",
+        "The History of Photography", "The World's Most Innovative Inventions",
+        "The Evolution of Transportation", "The Power of Renewable Energy",
+        "The Future of Medicine and Healthcare", "How Smartphones Changed Everything",
+        "The Evolution of Social Media", "The Truth About Electric Cars",
+        
+        # Mysteries & Unexplained
+        "The Mystery of UFOs and Aliens", "The World's Most Haunted Places",
+        "The Truth About the Loch Ness Monster", "Unsolved Mysteries That Baffle Scientists",
+        "The Mystery of Crop Circles", "The Truth About Area 51",
+        "Real Ghost Encounters Explained", "The Mystery of Atlantis",
+        "The Strangest Things Found in Space", "Unexplained Ocean Phenomena",
+        
+        # Extreme & Records
+        "The World's Most Amazing Architecture", "The World's Strangest Foods",
+        "The World's Most Extreme Weather", "The World's Rarest Gemstones",
+        "The Tallest Mountains on Earth", "The Deepest Ocean Trenches",
+        "The Fastest Vehicles Ever Built", "The Strongest Materials Known",
+        "The Loudest Sounds in History", "The Most Expensive Things Ever",
+        
+        # Skills & Arts
+        "The Art of Storytelling", "The Art of Creative Writing",
+        "The Art of Public Speaking", "How to Master Any Skill Faster",
+        "The Science of Perfect Timing", "How Magic Tricks Really Work",
+        "The Secret to Learning Languages Fast", "How Professional Athletes Train",
+        
+        # Climate & Earth
+        "The Science of Climate Change", "The Science of Earthquakes and Volcanoes",
+        "The Science of Ocean Currents", "How Weather Prediction Works",
+        "The Truth About Global Warming", "How Hurricanes Form and Move",
+        "Why the Earth Has Seasons", "The Science of Tsunamis"
     ]
     try:
         # The pytrends library is currently unreliable, so we will rely on the fallback list.

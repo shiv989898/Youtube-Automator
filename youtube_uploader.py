@@ -13,21 +13,78 @@ def generate_engaging_title(topic):
     Includes #Shorts for YouTube Shorts feed recognition.
     """
     title_templates = [
+        # Shock & Awe
         f"🤯 {topic} Will BLOW Your Mind! #Shorts",
         f"😱 You Won't BELIEVE This About {topic}! #Shorts",
+        f"⚠️ The Shocking Truth About {topic} #Shorts",
+        f"🚨 WARNING: This {topic} Fact Is INSANE! #Shorts",
+        f"😳 {topic}: This Will Leave You SPEECHLESS #Shorts",
+        f"🤭 The {topic} Secret They're Hiding #Shorts",
+        f"💀 {topic}: The Truth Is DISTURBING #Shorts",
+        
+        # Truth & Reality
         f"🔥 The TRUTH About {topic} #Shorts",
         f"⚡ {topic}: What They DON'T Tell You! #Shorts",
-        f"💥 {topic} Explained in 30 Seconds #Shorts",
-        f"🚀 The INSANE Reality of {topic} #Shorts",
-        f"✨ {topic}: The Hidden Secret #Shorts",
-        f"🎯 Everything You Need to Know About {topic} #Shorts",
-        f"🌟 {topic} - Mind Blowing Facts! #Shorts",
-        f"🔥 This Will Change How You See {topic} #Shorts",
-        f"⚠️ The Shocking Truth About {topic} #Shorts",
         f"💯 {topic}: What Everyone Gets WRONG #Shorts",
+        f"🎯 The REAL Story Behind {topic} #Shorts",
+        f"✅ {topic}: Facts vs Fiction #Shorts",
+        f"🔍 The Truth Behind {topic} EXPOSED #Shorts",
+        f"📢 Nobody Tells You THIS About {topic} #Shorts",
+        
+        # Quick & Educational
+        f"💥 {topic} Explained in 30 Seconds #Shorts",
+        f"⚡ {topic} in 60 Seconds #Shorts",
+        f"🎯 Everything You Need to Know About {topic} #Shorts",
         f"🎬 The Ultimate {topic} Breakdown #Shorts",
         f"🧠 {topic} - The Science Explained #Shorts",
-        f"⭐ Why {topic} Is More Important Than You Think #Shorts"
+        f"📚 {topic}: The Complete Guide #Shorts",
+        f"⏱️ {topic} Explained FAST #Shorts",
+        
+        # Superlatives & Extremes
+        f"🚀 The INSANE Reality of {topic} #Shorts",
+        f"🔥 This Will Change How You See {topic} #Shorts",
+        f"⭐ Why {topic} Is More Important Than You Think #Shorts",
+        f"💎 The MOST Important Thing About {topic} #Shorts",
+        f"🏆 {topic}: The ULTIMATE Truth #Shorts",
+        f"👑 The #1 Thing About {topic} Nobody Knows #Shorts",
+        f"🎯 The ONLY {topic} Video You Need #Shorts",
+        
+        # Mystery & Intrigue
+        f"✨ {topic}: The Hidden Secret #Shorts",
+        f"🔐 The {topic} Mystery SOLVED #Shorts",
+        f"🤫 The {topic} Secret Scientists Know #Shorts",
+        f"🎭 What They Won't Tell You About {topic} #Shorts",
+        f"🗝️ Unlocking the Secrets of {topic} #Shorts",
+        f"👀 You've Never Seen {topic} Like THIS #Shorts",
+        f"🌌 The Dark Side of {topic} #Shorts",
+        
+        # Questions & Curiosity
+        f"❓ What If {topic} Is Actually... #Shorts",
+        f"🤔 Why Does {topic} Even Exist? #Shorts",
+        f"💭 Ever Wonder About {topic}? #Shorts",
+        f"🧐 How Does {topic} Really Work? #Shorts",
+        f"⁉️ Is {topic} Real or Fake? #Shorts",
+        f"🎯 Can {topic} Actually Happen? #Shorts",
+        
+        # Viral & Trending
+        f"🌟 {topic} - Mind Blowing Facts! #Shorts",
+        f"🔥 {topic} Is Going VIRAL For This Reason #Shorts",
+        f"📈 Why Everyone Is Talking About {topic} #Shorts",
+        f"💫 {topic}: The Viral Sensation Explained #Shorts",
+        f"🎪 This {topic} Fact Broke the Internet #Shorts",
+        f"🌍 {topic}: Why It's Trending Worldwide #Shorts",
+        
+        # Personal & Relatable
+        f"😮 I Didn't Know This About {topic}! #Shorts",
+        f"🙀 {topic} Changed My Perspective Forever #Shorts",
+        f"💡 This {topic} Fact Blew My Mind #Shorts",
+        f"🎓 What I Learned About {topic} Today #Shorts",
+        
+        # Challenges & Comparisons
+        f"⚔️ {topic} vs Reality: You Decide #Shorts",
+        f"🥊 The Battle of {topic} #Shorts",
+        f"📊 {topic}: Before vs After #Shorts",
+        f"🎭 Myths About {topic} BUSTED #Shorts"
     ]
     return random.choice(title_templates)
 
