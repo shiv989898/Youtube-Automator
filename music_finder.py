@@ -49,18 +49,27 @@ def find_and_download_music(query, filename="background_music.mp3", max_retries=
             print(f"Attempt {attempt + 1}/{max_retries}: Downloading copyright-free background music...")
             print(f"Source: {music_url.split('/')[-1][:50]}")
             
-            response = requests.get(music_url, timeout=30)  # Shorter timeout for faster fails
+            # Stream download with timeout to prevent hanging
+            response = requests.get(music_url, timeout=30, stream=True)
             response.raise_for_status()
             
+            # Download in chunks to avoid memory issues and timeouts
+            chunk_size = 8192
+            downloaded_size = 0
+            with open(filename, "wb") as f:
+                for chunk in response.iter_content(chunk_size=chunk_size):
+                    if chunk:
+                        f.write(chunk)
+                        downloaded_size += len(chunk)
+            
             # Check if we got actual content
-            if len(response.content) < 10000:  # Less than 10KB is suspicious
+            if downloaded_size < 10000:  # Less than 10KB is suspicious
                 print("Downloaded file too small, trying another...")
+                if os.path.exists(filename):
+                    os.remove(filename)
                 continue
             
-            with open(filename, "wb") as f:
-                f.write(response.content)
-            
-            print(f"[SUCCESS] Copyright-free music saved to {filename} (Size: {len(response.content)/1024:.1f}KB)")
+            print(f"[SUCCESS] Copyright-free music saved to {filename} (Size: {downloaded_size/1024:.1f}KB)")
             print("Music: Royalty-Free licensed (Kevin MacLeod / Creative Commons)")
             return filename
                 
