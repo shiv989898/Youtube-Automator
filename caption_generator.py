@@ -41,7 +41,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
             caption_img = create_caption_image(
                 phrase.strip(),
                 width=video_clip.w,
-                height=400  # Balanced height for readable captions
+                height=350  # Slightly smaller height for captions
             )
             
             # Convert to ImageClip
@@ -70,7 +70,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
         return video_clip
 
 
-def create_caption_image(text, width=1080, height=400):
+def create_caption_image(text, width=1080, height=350):
     """
     Creates an attractive caption image with large, bold text using PIL/Pillow.
     Features: bigger font, thicker outline, yellow highlight effect.
@@ -81,7 +81,7 @@ def create_caption_image(text, width=1080, height=400):
     draw = ImageDraw.Draw(img)
     
     # Use large font for impact (balanced size)
-    font_size = 180  # Reduced to 180px for better balance
+    font_size = 140  # Reduced to 140px for slightly smaller captions
     try:
         # Try to use Arial Black or Bold for maximum impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)
@@ -104,7 +104,7 @@ def create_caption_image(text, width=1080, height=400):
                         font = ImageFont.load_default()
     
     # Wrap text to fit width (fewer characters per line due to larger font)
-    wrapped_text = textwrap.fill(text, width=12)  # Adjusted to 12 for 180px font
+    wrapped_text = textwrap.fill(text, width=14)  # Adjusted to 14 for 140px font
     
     # Get text bounding box
     bbox = draw.textbbox((0, 0), wrapped_text, font=font)
@@ -116,13 +116,13 @@ def create_caption_image(text, width=1080, height=400):
     y = (height - text_height) // 2
     
     # Draw thick black outline for better readability
-    outline_width = 12  # Adjusted to 12 for balanced look
+    outline_width = 10  # Adjusted to 10 for slightly smaller captions
     for adj_x in range(-outline_width, outline_width + 1):
         for adj_y in range(-outline_width, outline_width + 1):
             draw.text((x + adj_x, y + adj_y), wrapped_text, font=font, fill='black', align='center')
     
     # Draw yellow highlight/glow effect (optional - makes text pop)
-    glow_width = 6  # Adjusted to 6 for balanced look
+    glow_width = 5  # Adjusted to 5 for slightly smaller captions
     for adj_x in range(-glow_width, glow_width + 1):
         for adj_y in range(-glow_width, glow_width + 1):
             if abs(adj_x) > outline_width - 3 or abs(adj_y) > outline_width - 3:
