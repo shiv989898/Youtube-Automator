@@ -81,7 +81,7 @@ def create_caption_image(text, width=1080, height=350):
     draw = ImageDraw.Draw(img)
     
     # Use large font for impact (balanced size)
-    font_size = 133  # 5% smaller than 140px
+    font_size = 125
     try:
         # Try to use Arial Black or Bold for maximum impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)
