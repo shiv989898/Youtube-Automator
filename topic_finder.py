@@ -3,7 +3,8 @@ from pytrends.request import TrendReq
 
 def get_trending_topic():
     """
-    Gets a trending topic from a predefined list.
+    Gets a trending topic from Google Trends API, with fallback to curated list.
+    Prioritizes real-time trending topics for maximum relevance.
     """
     fallback_topics = [
         # Science & Technology
@@ -91,11 +92,42 @@ def get_trending_topic():
         "The Truth About Global Warming", "How Hurricanes Form and Move",
         "Why the Earth Has Seasons", "The Science of Tsunamis"
     ]
+    
     try:
-        # The pytrends library is currently unreliable, so we will rely on the fallback list.
-        # This ensures a topic is always found.
-        print("Choosing a topic from the curated list.")
-        return random.choice(fallback_topics)
+        # Try to get real-time trending topics from Google Trends
+        print("Fetching trending topics from Google Trends...")
+        pytrends = TrendReq(hl='en-US', tz=360)
+        
+        # Get trending searches (daily trends)
+        trending_searches_df = pytrends.trending_searches(pn='united_states')
+        
+        if not trending_searches_df.empty:
+            # Get top 5 trending searches
+            trending_topics = trending_searches_df[0].head(5).tolist()
+            
+            # Filter topics that are suitable for educational content
+            suitable_topics = []
+            exclude_keywords = ['celebrity', 'gossip', 'scandal', 'dating', 'relationship', 
+                              'instagram', 'tiktok', 'twitter', 'breaking news']
+            
+            for topic in trending_topics:
+                topic_lower = topic.lower()
+                # Check if topic is suitable (not celebrity gossip, etc.)
+                if not any(keyword in topic_lower for keyword in exclude_keywords):
+                    suitable_topics.append(topic)
+            
+            if suitable_topics:
+                selected_topic = random.choice(suitable_topics)
+                print(f"✅ Using trending topic: {selected_topic}")
+                return selected_topic
+            else:
+                print("⚠️ No suitable trending topics found, using curated list...")
+                return random.choice(fallback_topics)
+        else:
+            print("⚠️ No trending data available, using curated list...")
+            return random.choice(fallback_topics)
+            
     except Exception as e:
-        print(f"An error occurred: {e}. Using a random fallback topic as a last resort.")
+        print(f"⚠️ Google Trends API error: {e}")
+        print("Using curated topic from fallback list...")
         return random.choice(fallback_topics)
