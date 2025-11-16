@@ -10,23 +10,24 @@ import random
 def generate_engaging_title(topic):
     """
     Generates engaging, click-worthy titles with variety.
+    Includes #Shorts for YouTube Shorts feed recognition.
     """
     title_templates = [
-        f"🤯 {topic} Will BLOW Your Mind!",
-        f"😱 You Won't BELIEVE This About {topic}!",
-        f"🔥 The TRUTH About {topic}",
-        f"⚡ {topic}: What They DON'T Tell You!",
-        f"💥 {topic} Explained in 30 Seconds",
-        f"🚀 The INSANE Reality of {topic}",
-        f"✨ {topic}: The Hidden Secret",
-        f"🎯 Everything You Need to Know About {topic}",
-        f"🌟 {topic} - Mind Blowing Facts!",
-        f"🔥 This Will Change How You See {topic}",
-        f"⚠️ The Shocking Truth About {topic}",
-        f"💯 {topic}: What Everyone Gets WRONG",
-        f"🎬 The Ultimate {topic} Breakdown",
-        f"🧠 {topic} - The Science Explained",
-        f"⭐ Why {topic} Is More Important Than You Think"
+        f"🤯 {topic} Will BLOW Your Mind! #Shorts",
+        f"😱 You Won't BELIEVE This About {topic}! #Shorts",
+        f"🔥 The TRUTH About {topic} #Shorts",
+        f"⚡ {topic}: What They DON'T Tell You! #Shorts",
+        f"💥 {topic} Explained in 30 Seconds #Shorts",
+        f"🚀 The INSANE Reality of {topic} #Shorts",
+        f"✨ {topic}: The Hidden Secret #Shorts",
+        f"🎯 Everything You Need to Know About {topic} #Shorts",
+        f"🌟 {topic} - Mind Blowing Facts! #Shorts",
+        f"🔥 This Will Change How You See {topic} #Shorts",
+        f"⚠️ The Shocking Truth About {topic} #Shorts",
+        f"💯 {topic}: What Everyone Gets WRONG #Shorts",
+        f"🎬 The Ultimate {topic} Breakdown #Shorts",
+        f"🧠 {topic} - The Science Explained #Shorts",
+        f"⭐ Why {topic} Is More Important Than You Think #Shorts"
     ]
     return random.choice(title_templates)
 
