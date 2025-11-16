@@ -40,11 +40,29 @@ def generate_voiceover(filename, text):
             
     except Exception as e:
         print(f"[WARNING] edge-tts failed: {e}")
-        print("Falling back to enhanced system voice...")
+        print("Trying gTTS (Google Text-to-Speech)...")
     
-    # Fallback to pyttsx3 if ElevenLabs is not available
+    # Try gTTS (Google Text-to-Speech) as middle fallback
+    try:
+        from gtts import gTTS
+        tts = gTTS(text=text, lang='en', slow=False)
+        tts.save(filename)
+        
+        # Verify file was created
+        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
+            print(f"[SUCCESS] Voiceover generated with gTTS (Google voice - reliable)")
+            return filename
+        else:
+            print("[WARNING] gTTS generated invalid file. Trying system voice...")
+            
+    except Exception as e:
+        print(f"[WARNING] gTTS failed: {e}")
+        print("Falling back to system voice...")
+    
+    # Fallback to pyttsx3 if both edge-tts and gTTS fail
     try:
         import pyttsx3
+        print("[INFO] Initializing system text-to-speech...")
         engine = pyttsx3.init()
 
         # --- Enhancements for more human-like voice ---
@@ -56,6 +74,9 @@ def generate_voiceover(filename, text):
 
         # 3. Select the best available voice (prioritize female voices for better quality)
         voices = engine.getProperty('voices')
+        
+        if not voices:
+            raise Exception("No system voices available")
         
         # Try to find Zira (female, high quality) or other premium voices
         zira = next((v for v in voices if 'zira' in v.name.lower()), None)
@@ -86,9 +107,18 @@ def generate_voiceover(filename, text):
 
         engine.save_to_file(text, filename)
         engine.runAndWait()
-        print(f"[OK] Voiceover saved to {filename} (Enhanced system voice)")
-        return filename
         
+        # Verify file was created
+        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
+            print(f"[SUCCESS] Voiceover saved to {filename} (System voice)")
+            return filename
+        else:
+            raise Exception("pyttsx3 failed to generate valid audio file")
+        
+    except Exception as e:
+        print(f"[ERROR] All voiceover methods failed: {e}")
+        print("[CRITICAL] Cannot proceed without voiceover. Exiting...")
+        raise Exception(f"Error generating voiceover: {e}")
     except Exception as e:
         print(f"[ERROR] Error generating voiceover: {e}")
         return None
