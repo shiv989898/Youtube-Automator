@@ -41,7 +41,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
             caption_img = create_caption_image(
                 phrase.strip(),
                 width=video_clip.w,
-                height=500  # Increased height for bigger captions
+                height=600  # Increased height for MASSIVE captions
             )
             
             # Convert to ImageClip
@@ -70,7 +70,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
         return video_clip
 
 
-def create_caption_image(text, width=1080, height=500):
+def create_caption_image(text, width=1080, height=600):
     """
     Creates an attractive caption image with large, bold text using PIL/Pillow.
     Features: bigger font, thicker outline, yellow highlight effect.
@@ -80,10 +80,10 @@ def create_caption_image(text, width=1080, height=500):
     img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # Use much larger font for impact
-    font_size = 220  # Increased from 120 to 220 for MUCH bigger captions
+    # Use MASSIVE font for impact
+    font_size = 350  # MASSIVELY increased for YouTube Shorts visibility
     try:
-        # Try to use Arial Black or Bold for maximum impact
+        # Try to use Arial Black or Bold for maximum impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)
     except:
         try:
@@ -93,10 +93,18 @@ def create_caption_image(text, width=1080, height=500):
                 # Try common Windows fonts
                 font = ImageFont.truetype("impact.ttf", font_size)
             except:
-                font = ImageFont.load_default()
+                try:
+                    # Linux/Ubuntu fonts (for GitHub Actions)
+                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+                except:
+                    try:
+                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
+                    except:
+                        # Fallback to default (will still be 350px if possible)
+                        font = ImageFont.load_default()
     
     # Wrap text to fit width (fewer characters per line due to larger font)
-    wrapped_text = textwrap.fill(text, width=10)  # Reduced from 15 to 10 for larger font
+    wrapped_text = textwrap.fill(text, width=8)  # Reduced to 8 for massive 350px font
     
     # Get text bounding box
     bbox = draw.textbbox((0, 0), wrapped_text, font=font)
@@ -108,13 +116,13 @@ def create_caption_image(text, width=1080, height=500):
     y = (height - text_height) // 2
     
     # Draw thick black outline for better readability
-    outline_width = 15  # Increased from 12 to 15 for even thicker outline
+    outline_width = 18  # Increased to 18 for massive font
     for adj_x in range(-outline_width, outline_width + 1):
         for adj_y in range(-outline_width, outline_width + 1):
             draw.text((x + adj_x, y + adj_y), wrapped_text, font=font, fill='black', align='center')
     
     # Draw yellow highlight/glow effect (optional - makes text pop)
-    glow_width = 8  # Increased from 6 to 8
+    glow_width = 10  # Increased to 10 for massive font
     for adj_x in range(-glow_width, glow_width + 1):
         for adj_y in range(-glow_width, glow_width + 1):
             if abs(adj_x) > outline_width - 3 or abs(adj_y) > outline_width - 3:
