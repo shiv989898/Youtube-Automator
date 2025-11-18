@@ -15,7 +15,7 @@ async def _generate_with_edge_tts(text, filename):
     
     voice = "en-US-JennyNeural"  # Natural, engaging female voice
     
-    communicate = Communicate(text, voice, rate="+10%", pitch="+5Hz")  # Slightly faster and higher for energy
+    communicate = Communicate(text, voice, rate="+20%", pitch="+5Hz")  # Faster for more energy and engagement
     await communicate.save(filename)
 
 def generate_voiceover(filename, text):
@@ -45,7 +45,7 @@ def generate_voiceover(filename, text):
     # Try gTTS (Google Text-to-Speech) as middle fallback
     try:
         from gtts import gTTS
-        tts = gTTS(text=text, lang='en', slow=False)
+        tts = gTTS(text=text, lang='en', slow=False, tld='com')
         tts.save(filename)
         
         # Verify file was created
@@ -67,7 +67,7 @@ def generate_voiceover(filename, text):
 
         # --- Enhancements for more human-like voice ---
         # 1. Set a faster, more energetic rate for YouTube Shorts
-        engine.setProperty('rate', 185)  # Faster, more engaging pace
+        engine.setProperty('rate', 200)  # Faster, more engaging pace
 
         # 2. Set volume to maximum for clarity
         engine.setProperty('volume', 1.0)  # 100% volume
