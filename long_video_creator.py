@@ -3,7 +3,7 @@ from moviepy.editor import (VideoFileClip, AudioFileClip, CompositeAudioClip,
 from moviepy.video.fx import all as vfx
 import math
 import random
-import caption_generator_horizontal
+import caption_generator  # Using same caption generator as shorts
 
 def create_long_video(visual_files, voiceover_file, output_file, music_file=None, script_text=None):
     """
@@ -105,6 +105,14 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
 
         # Long-form videos don't need captions (viewers can use YouTube's auto-captions)
         # Skipping caption generation for cleaner professional look
+        
+        # --- Add Captions (same style as Shorts) ---
+        if script_text:
+            try:
+                final_clip = caption_generator.add_captions_to_video(final_clip, script_text, total_duration)
+            except Exception as e:
+                print(f"Warning: Could not add captions: {e}")
+                print("Continuing without captions...")
 
         # --- Audio Composition ---
         audio_clips = [voiceover]
