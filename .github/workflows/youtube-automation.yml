@@ -42,8 +42,27 @@ jobs:
         echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
         echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
     
-    - name: Run Video Dispatcher
-      run: python dispatcher.py
+    - name: Determine video type (alternating based on hour)
+      id: video_type
+      run: |
+        HOUR=$(date +%H)
+        if [ $((HOUR % 2)) -eq 0 ]; then
+          echo "type=short" >> $GITHUB_OUTPUT
+          echo "📱 Creating YouTube Short (vertical format)"
+        else
+          echo "type=long" >> $GITHUB_OUTPUT
+          echo "🎬 Creating Long-Form Video (horizontal format)"
+        fi
+    
+    - name: Run YouTube Shorts generation
+      if: steps.video_type.outputs.type == 'short'
+      run: python main.py
+      env:
+        PYTHONUNBUFFERED: 1
+    
+    - name: Run Long-Form Video generation
+      if: steps.video_type.outputs.type == 'long'
+      run: python main_long.py
       env:
         PYTHONUNBUFFERED: 1
     
