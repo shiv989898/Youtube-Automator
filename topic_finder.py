@@ -96,24 +96,57 @@ def get_trending_topic():
     try:
         # Try to get real-time trending topics from Google Trends
         print("Fetching trending topics from Google Trends...")
-        pytrends = TrendReq(hl='en-US', tz=360)
         
-        # Get trending searches (daily trends)
-        trending_searches_df = pytrends.trending_searches(pn='united_states')
+        # Use more relaxed settings to avoid 429 errors
+        pytrends = TrendReq(hl='en-US', tz=360, timeout=(10, 25), retries=2, backoff_factor=0.5)
         
-        if not trending_searches_df.empty:
-            # Get top 5 trending searches
-            trending_topics = trending_searches_df[0].head(5).tolist()
-            
+        # Try multiple methods to get trending data
+        trending_topics = []
+        
+        # Method 1: Try trending searches
+        try:
+            trending_searches_df = pytrends.trending_searches(pn='united_states')
+            if not trending_searches_df.empty:
+                trending_topics.extend(trending_searches_df[0].head(10).tolist())
+                print(f"✅ Found {len(trending_topics)} trending searches")
+        except Exception as e:
+            print(f"⚠️ Trending searches failed: {e}")
+        
+        # Method 2: Try daily trends (alternative API endpoint)
+        if not trending_topics:
+            try:
+                daily_trends = pytrends.today_searches(pn='US')
+                if not daily_trends.empty:
+                    trending_topics.extend(daily_trends[0].head(10).tolist())
+                    print(f"✅ Found {len(trending_topics)} daily trends")
+            except Exception as e:
+                print(f"⚠️ Daily trends failed: {e}")
+        
+        # Method 3: Search for popular educational topics
+        if not trending_topics:
+            try:
+                educational_keywords = ['science', 'technology', 'history', 'space', 'nature', 'psychology']
+                keyword = random.choice(educational_keywords)
+                pytrends.build_payload([keyword], timeframe='now 7-d', geo='US')
+                related = pytrends.related_queries()
+                if keyword in related and related[keyword]['top'] is not None:
+                    top_queries = related[keyword]['top']['query'].head(5).tolist()
+                    trending_topics.extend(top_queries)
+                    print(f"✅ Found {len(trending_topics)} related topics for '{keyword}'")
+            except Exception as e:
+                print(f"⚠️ Related queries failed: {e}")
+        
+        if trending_topics:
             # Filter topics that are suitable for educational content
             suitable_topics = []
             exclude_keywords = ['celebrity', 'gossip', 'scandal', 'dating', 'relationship', 
-                              'instagram', 'tiktok', 'twitter', 'breaking news']
+                              'instagram', 'tiktok', 'twitter', 'breaking', 'arrested', 
+                              'died', 'death', 'divorce', 'pregnant', 'baby']
             
             for topic in trending_topics:
-                topic_lower = topic.lower()
+                topic_lower = str(topic).lower()
                 # Check if topic is suitable (not celebrity gossip, etc.)
-                if not any(keyword in topic_lower for keyword in exclude_keywords):
+                if not any(keyword in topic_lower for keyword in exclude_keywords) and len(topic) > 5:
                     suitable_topics.append(topic)
             
             if suitable_topics:
@@ -121,10 +154,10 @@ def get_trending_topic():
                 print(f"✅ Using trending topic: {selected_topic}")
                 return selected_topic
             else:
-                print("⚠️ No suitable trending topics found, using curated list...")
+                print("⚠️ No suitable trending topics after filtering, using curated list...")
                 return random.choice(fallback_topics)
         else:
-            print("⚠️ No trending data available, using curated list...")
+            print("⚠️ No trending data available from any method, using curated list...")
             return random.choice(fallback_topics)
             
     except Exception as e:

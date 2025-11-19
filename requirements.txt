@@ -1,6 +1,7 @@
 # For interacting with APIs
 requests
 python-dotenv
+urllib3<2.0.0  # Fix compatibility with pytrends
 
 # For finding trending topics
 pytrends
