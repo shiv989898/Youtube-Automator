@@ -42,32 +42,23 @@ jobs:
         echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
         echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
     
-    - name: Determine video type (Hybrid Python/Shell)
-      id: video_type
+    - name: Get Current Hour
+      id: time
+      run: echo "hour=$(date +%H)" >> $GITHUB_OUTPUT
+
+    - name: Create YouTube Short (if even hour)
+      if: fromJson(steps.time.outputs.hour) % 2 == 0
       run: |
-        # Use Python to determine the video type to avoid all shell arithmetic issues.
-        # Python prints 'short' or 'long' to stdout.
-        VIDEO_TYPE=$(python -c "from datetime import datetime; print('short' if datetime.now().hour % 2 == 0 else 'long')")
-        
-        # The shell captures the output and sets the GitHub Actions output variable.
-        echo "Python determined video type: $VIDEO_TYPE"
-        echo "type=$VIDEO_TYPE" >> $GITHUB_OUTPUT
-        
-        if [ "$VIDEO_TYPE" == "short" ]; then
-          echo "📱 Creating YouTube Short."
-        else
-          echo "🎬 Creating Long-Form Video."
-        fi
-    
-    - name: Run YouTube Shorts generation
-      if: steps.video_type.outputs.type == 'short'
-      run: python main.py
+        echo "📱 It is hour ${{ steps.time.outputs.hour }}, creating a YouTube Short."
+        python main.py
       env:
         PYTHONUNBUFFERED: 1
-    
-    - name: Run Long-Form Video generation
-      if: steps.video_type.outputs.type == 'long'
-      run: python main_long.py
+        
+    - name: Create Long-Form Video (if odd hour)
+      if: fromJson(steps.time.outputs.hour) % 2 != 0
+      run: |
+        echo "🎬 It is hour ${{ steps.time.outputs.hour }}, creating a Long-Form Video."
+        python main_long.py
       env:
         PYTHONUNBUFFERED: 1
     
