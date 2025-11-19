@@ -45,17 +45,22 @@ jobs:
     - name: Determine video type (alternating based on hour)
       id: video_type
       run: |
-        # Get the current hour (e.g., 08, 09, 10)
+        # Get the current hour as a string (e.g., "08", "09", "10")
         HOUR_STRING=$(date +%H)
-        # Use printf to convert the string to a decimal number, preventing octal issues
-        HOUR_DECIMAL=$(printf "%d" "$HOUR_STRING")
-        
-        if [ $(($HOUR_DECIMAL % 2)) -eq 0 ]; then
+        echo "Debug: Raw HOUR_STRING from date command is: '$HOUR_STRING'"
+
+        # Use awk to perform the modulo operation, which correctly interprets numbers
+        # and avoids shell's octal interpretation issues.
+        # This is a highly portable and reliable method.
+        RESULT=$(echo "$HOUR_STRING" | awk '{print $1 % 2}')
+        echo "Debug: awk modulo result is: '$RESULT'"
+
+        if [ "$RESULT" -eq 0 ]; then
           echo "type=short" >> $GITHUB_OUTPUT
-          echo "📱 Creating YouTube Short (vertical format) for hour $HOUR_DECIMAL"
+          echo "📱 Creating YouTube Short (vertical format) for hour $HOUR_STRING"
         else
           echo "type=long" >> $GITHUB_OUTPUT
-          echo "🎬 Creating Long-Form Video (horizontal format) for hour $HOUR_DECIMAL"
+          echo "🎬 Creating Long-Form Video (horizontal format) for hour $HOUR_STRING"
         fi
     
     - name: Run YouTube Shorts generation
