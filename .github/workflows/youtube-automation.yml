@@ -42,25 +42,23 @@ jobs:
         echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
         echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
     
-    - name: Determine video type (alternating based on hour)
+    - name: Determine video type (Python)
       id: video_type
+      shell: bash
       run: |
-        # Get the current hour as a two-digit string (e.g., "08", "09", "10")
-        HOUR_STRING=$(date +%H)
-        echo "Debug: Raw HOUR_STRING from date command is: '$HOUR_STRING'"
-
-        # Use a case statement for robust string comparison to avoid all octal issues.
-        # This checks if the current hour string matches any of the even hour strings.
-        case "$HOUR_STRING" in
-          "00" | "02" | "04" | "06" | "08" | "10" | "12" | "14" | "16" | "18" | "20" | "22")
-            echo "type=short" >> $GITHUB_OUTPUT
-            echo "📱 Creating YouTube Short (vertical format) for hour $HOUR_STRING"
-            ;;
-          *)
-            echo "type=long" >> $GITHUB_OUTPUT
-            echo "🎬 Creating Long-Form Video (horizontal format) for hour $HOUR_STRING"
-            ;;
-        esac
+        python -c '
+        import os
+        from datetime import datetime
+        hour = datetime.now().hour
+        if hour % 2 == 0:
+            video_type = "short"
+            print(f"📱 It is hour {hour}, creating a YouTube Short.")
+        else:
+            video_type = "long"
+            print(f"🎬 It is hour {hour}, creating a Long-Form Video.")
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            print(f"type={video_type}", file=f)
+        '
     
     - name: Run YouTube Shorts generation
       if: steps.video_type.outputs.type == 'short'
