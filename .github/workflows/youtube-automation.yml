@@ -42,23 +42,8 @@ jobs:
         echo '${{ secrets.CLIENT_SECRET_JSON }}' > client_secret.json
         echo '${{ secrets.TOKEN_PICKLE_BASE64 }}' | base64 -d > token.pickle
     
-    - name: Get Current Hour
-      id: time
-      run: echo "hour=$(date +%H)" >> $GITHUB_OUTPUT
-
-    - name: Create YouTube Short (if even hour)
-      if: fromJson(steps.time.outputs.hour) % 2 == 0
-      run: |
-        echo "📱 It is hour ${{ steps.time.outputs.hour }}, creating a YouTube Short."
-        python main.py
-      env:
-        PYTHONUNBUFFERED: 1
-        
-    - name: Create Long-Form Video (if odd hour)
-      if: fromJson(steps.time.outputs.hour) % 2 != 0
-      run: |
-        echo "🎬 It is hour ${{ steps.time.outputs.hour }}, creating a Long-Form Video."
-        python main_long.py
+    - name: Run Video Dispatcher
+      run: python dispatcher.py
       env:
         PYTHONUNBUFFERED: 1
     
