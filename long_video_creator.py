@@ -58,7 +58,7 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
 
                 if clip:
                     # Standardize clip size for YouTube horizontal format (1920x1080)
-                    clip = clip.resize(height=1080).set_position(('center', 'center'))
+                    clip = clip.resize(width=1920).set_position(('center', 'center'))
                     
                     # Add subtle fade transitions between clips for smoother viewing
                     if i > 0:  # Not the first clip
@@ -103,13 +103,8 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
         except Exception as e:
             print(f"Note: Vignette effect skipped: {e}")
 
-        # --- Add Horizontal Captions ---
-        if script_text:
-            try:
-                final_clip = caption_generator_horizontal.add_captions_to_video(final_clip, script_text, total_duration)
-            except Exception as e:
-                print(f"Warning: Could not add captions: {e}")
-                print("Continuing without captions...")
+        # Long-form videos don't need captions (viewers can use YouTube's auto-captions)
+        # Skipping caption generation for cleaner professional look
 
         # --- Audio Composition ---
         audio_clips = [voiceover]

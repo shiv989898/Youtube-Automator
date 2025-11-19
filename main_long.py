@@ -56,7 +56,7 @@ def main():
         print("Could not find background music.")
 
     print("Gathering visuals...")
-    visual_files = visuals.get_visuals(topic, 8)  # More visuals for longer content
+    visual_files = visuals.get_visuals(topic, 15)  # More visuals for longer content (15 for better variety)
     print(f"Found {len(visual_files)} visuals.")
 
     if not visual_files:
