@@ -45,8 +45,9 @@ jobs:
     - name: Determine video type (alternating based on hour)
       id: video_type
       run: |
-        HOUR=$(date +%-H)  # Use %-H to get hour without leading zero
-        if [ $((HOUR % 2)) -eq 0 ]; then
+        HOUR=$(date +%H)
+        # Use 10# to force base 10 interpretation, preventing octal errors with leading zeros (e.g. "08")
+        if [ $((10#$HOUR % 2)) -eq 0 ]; then
           echo "type=short" >> $GITHUB_OUTPUT
           echo "📱 Creating YouTube Short (vertical format)"
         else
