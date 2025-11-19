@@ -45,23 +45,22 @@ jobs:
     - name: Determine video type (alternating based on hour)
       id: video_type
       run: |
-        # Get the current hour as a string (e.g., "08", "09", "10")
+        # Get the current hour as a two-digit string (e.g., "08", "09", "10")
         HOUR_STRING=$(date +%H)
         echo "Debug: Raw HOUR_STRING from date command is: '$HOUR_STRING'"
 
-        # Use awk to perform the modulo operation, which correctly interprets numbers
-        # and avoids shell's octal interpretation issues.
-        # This is a highly portable and reliable method.
-        RESULT=$(echo "$HOUR_STRING" | awk '{print $1 % 2}')
-        echo "Debug: awk modulo result is: '$RESULT'"
-
-        if [ "$RESULT" -eq 0 ]; then
-          echo "type=short" >> $GITHUB_OUTPUT
-          echo "📱 Creating YouTube Short (vertical format) for hour $HOUR_STRING"
-        else
-          echo "type=long" >> $GITHUB_OUTPUT
-          echo "🎬 Creating Long-Form Video (horizontal format) for hour $HOUR_STRING"
-        fi
+        # Use a case statement for robust string comparison to avoid all octal issues.
+        # This checks if the current hour string matches any of the even hour strings.
+        case "$HOUR_STRING" in
+          "00" | "02" | "04" | "06" | "08" | "10" | "12" | "14" | "16" | "18" | "20" | "22")
+            echo "type=short" >> $GITHUB_OUTPUT
+            echo "📱 Creating YouTube Short (vertical format) for hour $HOUR_STRING"
+            ;;
+          *)
+            echo "type=long" >> $GITHUB_OUTPUT
+            echo "🎬 Creating Long-Form Video (horizontal format) for hour $HOUR_STRING"
+            ;;
+        esac
     
     - name: Run YouTube Shorts generation
       if: steps.video_type.outputs.type == 'short'
