@@ -142,7 +142,9 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
                                   remove_temp=True,
                                   fps=30,  # Smooth 30fps for better quality
                                   preset='medium',  # Balance between quality and encoding speed
-                                  bitrate="10000k")  # Higher bitrate for long-form content
+                                  bitrate="10000k",  # Higher bitrate for long-form content
+                                  threads=4,  # Use multiple threads for faster encoding
+                                  logger=None)  # Reduce memory overhead from logging
         
         print(f"✨ Long-form video created successfully: {output_file}")
 
