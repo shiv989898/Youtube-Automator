@@ -4,7 +4,7 @@ import re
 import textwrap
 import numpy as np
 
-def add_captions_to_video(video_clip, script_text, voiceover_duration):
+def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0):
     """
     Adds attractive animated captions to the video clip using PIL/Pillow.
     Captions appear in the lower-middle section with large, bold text.
@@ -36,29 +36,34 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
         if not phrase.strip():
             continue
         
-        try:
-            # Create larger, more attractive caption image
-            caption_img = create_caption_image(
-                phrase.strip(),
-                width=video_clip.w,
-                height=350  # Slightly smaller height for captions
-            )
-            
-            # Convert to ImageClip
-            img_clip = ImageClip(caption_img)
-            # Position in lower-middle section (about 60% down the screen)
-            img_clip = img_clip.set_position(('center', int(video_clip.h * 0.6)))
-            img_clip = img_clip.set_start(current_time)
-            img_clip = img_clip.set_duration(min(time_per_phrase, voiceover_duration - current_time))
-            
-            caption_clips.append(img_clip)
-            current_time += time_per_phrase
-            
-            if current_time >= voiceover_duration:
-                break
-        except Exception as e:
-            print(f"Warning: Could not create caption for phrase '{phrase[:30]}...': {e}")
-            continue
+            try:
+                # Scaled caption dimensions to reduce memory usage for long-form videos
+                cap_width = max(200, int(video_clip.w * 0.9 * scale))
+                cap_height = max(60, int(200 * scale))
+
+                # Create caption image
+                caption_img = create_caption_image(
+                    phrase.strip(),
+                    width=cap_width,
+                    height=cap_height
+                )
+
+                # Convert to ImageClip (Pillow->numpy uint8 helps keep memory down)
+                img_clip = ImageClip(caption_img)
+                # Position lower-middle; use slightly lower placement for long-form
+                position_y = int(video_clip.h * (0.65 if scale < 0.9 else 0.6))
+                img_clip = img_clip.set_position(('center', position_y))
+                img_clip = img_clip.set_start(current_time)
+                img_clip = img_clip.set_duration(min(time_per_phrase, voiceover_duration - current_time))
+
+                caption_clips.append(img_clip)
+                current_time += time_per_phrase
+
+                if current_time >= voiceover_duration:
+                    break
+            except Exception as e:
+                print(f"Warning: Could not create caption for phrase '{phrase[:30]}...': {e}")
+                continue
     
     # Composite video with captions
     if caption_clips:
@@ -76,12 +81,12 @@ def create_caption_image(text, width=1080, height=350):
     Features: bigger font, thicker outline, yellow highlight effect.
     Returns a numpy array suitable for MoviePy.
     """
-    # Create transparent image
+    # Create transparent image (RGBA, 8-bit per channel)
     img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
     
-    # Use large font for impact (balanced size)
-    font_size = 125
+    # Determine font size relative to width for better scaling across sizes
+    font_size = max(18, int(width * 0.12))
     try:
         # Try to use Arial Black or Bold for maximum impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)
@@ -103,8 +108,9 @@ def create_caption_image(text, width=1080, height=350):
                         # Fallback to default (will still be 350px if possible)
                         font = ImageFont.load_default()
     
-    # Wrap text to fit width (fewer characters per line due to larger font)
-    wrapped_text = textwrap.fill(text, width=14)  # Adjusted to 14 for 140px font
+    # Wrap text to fit width; approximate characters per line by width/font_size
+    approx_chars = max(10, int(width / (font_size * 0.6)))
+    wrapped_text = textwrap.fill(text, width=approx_chars)
     
     # Get text bounding box
     bbox = draw.textbbox((0, 0), wrapped_text, font=font)
@@ -115,22 +121,20 @@ def create_caption_image(text, width=1080, height=350):
     x = (width - text_width) // 2
     y = (height - text_height) // 2
     
-    # Draw thick black outline for better readability
-    outline_width = 10  # Adjusted to 10 for slightly smaller captions
-    for adj_x in range(-outline_width, outline_width + 1):
-        for adj_y in range(-outline_width, outline_width + 1):
-            draw.text((x + adj_x, y + adj_y), wrapped_text, font=font, fill='black', align='center')
-    
-    # Draw yellow highlight/glow effect (optional - makes text pop)
-    glow_width = 5  # Adjusted to 5 for slightly smaller captions
-    for adj_x in range(-glow_width, glow_width + 1):
-        for adj_y in range(-glow_width, glow_width + 1):
-            if abs(adj_x) > outline_width - 3 or abs(adj_y) > outline_width - 3:
-                draw.text((x + adj_x, y + adj_y), wrapped_text, font=font, fill='#FFD700', align='center')
+    # Draw a lighter outline for readability (reduced loops to cut CPU/memory)
+    outline_width = max(2, font_size // 20)
+    for adj in [(-outline_width, 0), (outline_width, 0), (0, -outline_width), (0, outline_width), (-outline_width, -outline_width), (outline_width, outline_width)]:
+        draw.text((x + adj[0], y + adj[1]), wrapped_text, font=font, fill='black', align='center')
+
+    # Draw subtle yellow glow using fewer offsets
+    glow_width = max(1, font_size // 40)
+    for adj in [(-glow_width, 0), (glow_width, 0), (0, -glow_width), (0, glow_width)]:
+        draw.text((x + adj[0], y + adj[1]), wrapped_text, font=font, fill='#FFD700', align='center')
     
     # Draw main text (bright white for maximum contrast)
     draw.text((x, y), wrapped_text, font=font, fill='white', align='center')
     
-    # Convert to numpy array with transparency (RGBA to keep transparent background)
-    return np.array(img)
+    # Convert to numpy uint8 array with transparency (RGBA)
+    arr = np.array(img, dtype=np.uint8)
+    return arr
 

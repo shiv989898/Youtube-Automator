@@ -3,8 +3,9 @@ from dotenv import load_dotenv
 import topic_finder
 import script_generator_long
 import voiceover
-import visuals
+import visuals_long
 import long_video_creator
+import subtitle_generator_long
 import youtube_uploader_long
 import music_finder
 import re
@@ -55,8 +56,8 @@ def main():
     else:
         print("Could not find background music.")
 
-    print("Gathering visuals...")
-    visual_files = visuals.get_visuals(topic, 15)  # More visuals for longer content (15 for better variety)
+    print("Gathering horizontal visuals for long-form video...")
+    visual_files = visuals_long.get_visuals(topic, 12)  # Fewer but longer landscape clips
     print(f"Found {len(visual_files)} visuals.")
 
     if not visual_files:
@@ -66,6 +67,21 @@ def main():
     print("Creating long-form video...")
     long_video_creator.create_long_video(visual_files, voiceover_file, "final_long_video.mp4", music_file, cleaned_script)
     print("Long-form video created successfully: final_long_video.mp4")
+
+    # Generate a soft subtitle file (.srt) alongside the video for YouTube
+    try:
+        from moviepy.editor import AudioFileClip
+
+        voice = AudioFileClip(voiceover_file)
+        subtitle_generator_long.generate_srt_from_script(
+            cleaned_script,
+            voice.duration,
+            "final_long_video.srt",
+        )
+        voice.close()
+        print("Subtitle file generated: final_long_video.srt")
+    except Exception as e:
+        print(f"Warning: Could not generate .srt subtitles: {e}")
 
     print("Uploading to YouTube...")
     video_id = youtube_uploader_long.upload_long_video(

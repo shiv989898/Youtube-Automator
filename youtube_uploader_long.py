@@ -72,6 +72,25 @@ def generate_tags_long(topic):
     
     return base_tags[:15]  # YouTube allows up to 500 characters
 
+def _clean_description(text: str, max_length: int = 4900) -> str:
+    """Sanitize and clamp description to be valid for YouTube.
+
+    - Remove problematic control characters
+    - Ensure overall length stays safely under the 5000-char limit
+    """
+    if not text:
+        return ""
+    # Keep printable ASCII plus basic whitespace
+    cleaned = ''.join(
+        ch if 32 <= ord(ch) <= 126 or ch in "\n\r\t" else ' '
+        for ch in text
+    )
+    cleaned = cleaned.strip()
+    if len(cleaned) > max_length:
+        cleaned = cleaned[: max_length - 3] + '...'
+    return cleaned
+
+
 def upload_long_video(video_file, topic, description):
     """
     Uploads a long-form video to YouTube with appropriate settings.
@@ -98,10 +117,14 @@ def upload_long_video(video_file, topic, description):
     
     title = generate_engaging_title_long(topic)
     tags = generate_tags_long(topic)
-    
-    # Enhanced description for long-form content
-    full_description = f"{description}\n\n"
-    full_description += f"In this video, we explore {topic} in detail, covering all the important aspects and providing you with comprehensive information.\n\n"
+
+    # For long-form videos, avoid dumping the full script into the
+    # description. Use a short, clean template based only on the topic.
+    base_description = f"In this video, we explore {topic} in a clear and engaging way, breaking it down into simple, practical insights."
+    safe_description = _clean_description(base_description, max_length=800)
+
+    # Final description shown on YouTube
+    full_description = f"{safe_description}\n\n"
     full_description += "🔔 Subscribe for more educational content!\n"
     full_description += "👍 Like if you found this helpful!\n"
     full_description += "💬 Comment your thoughts below!\n\n"

@@ -1,6 +1,7 @@
 from moviepy.editor import (VideoFileClip, AudioFileClip, CompositeAudioClip, 
-                            ImageClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
+                            ImageClip, TextClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
 from moviepy.video.fx import all as vfx
+from moviepy.video.fx.all import crop
 import math
 import random
 import caption_generator  # Using same caption generator as shorts
@@ -12,10 +13,19 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
     """
     print("Creating long-form horizontal video...")
     clips = []
+    # Target horizontal (16:9) size for long-form videos (720p to reduce memory)
+    TARGET_W = 1280
+    TARGET_H = 720
     
     try:
         voiceover = AudioFileClip(voiceover_file)
         total_duration = voiceover.duration
+
+        # Cap maximum duration for long-form videos to avoid huge memory usage
+        max_duration = 480  # seconds (8 minutes)
+        if total_duration > max_duration:
+            print(f"Note: Capping long-form video duration from {total_duration:.1f}s to {max_duration}s to reduce memory usage.")
+            total_duration = max_duration
         duration_per_visual = math.ceil(total_duration / len(visual_files)) if visual_files else 0
 
         if duration_per_visual == 0:
@@ -27,44 +37,53 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
             try:
                 if visual_file.lower().endswith(('.mp4', '.mov')):
                     clip = VideoFileClip(visual_file)
+
+                    # Hard-crop every clip to 16:9 so final video is always
+                    # properly horizontal with no vertical bars.
+                    try:
+                        target_ratio = TARGET_W / TARGET_H
+                        clip_ratio = clip.w / clip.h
+                        if abs(clip_ratio - target_ratio) > 0.01:
+                            if clip_ratio < target_ratio:
+                                # Too tall: crop top/bottom
+                                new_h = int(clip.w / target_ratio)
+                                if new_h < 1:
+                                    new_h = clip.h
+                                y1 = max((clip.h - new_h) // 2, 0)
+                                y2 = min(y1 + new_h, clip.h)
+                                clip = crop(clip, x1=0, x2=clip.w, y1=y1, y2=y2)
+                            else:
+                                # Too wide: crop sides
+                                new_w = int(clip.h * target_ratio)
+                                if new_w < 1:
+                                    new_w = clip.w
+                                x1 = max((clip.w - new_w) // 2, 0)
+                                x2 = min(x1 + new_w, clip.w)
+                                clip = crop(clip, x1=x1, x2=x2, y1=0, y2=clip.h)
+                    except Exception:
+                        pass
                     # Loop shorter clips to fit the required duration
                     if clip.duration < duration_per_visual:
                         clip = clip.fx(vfx.loop, duration=duration_per_visual)
                     else:
                         clip = clip.subclip(0, duration_per_visual)
                     
-                    # Add subtle professional effects to video clips
-                    effect = random.choice(['zoom_in', 'zoom_out', 'pan_left', 'pan_right', 'none'])
-                    if effect == 'zoom_in':
-                        clip = clip.resize(lambda t: 1 + 0.1 * (t / duration_per_visual))
-                    elif effect == 'zoom_out':
-                        clip = clip.resize(lambda t: 1.1 - 0.1 * (t / duration_per_visual))
+                    # Skip heavy zoom/pan effects for stability in long-form
                 
                 elif visual_file.lower().endswith(('.jpg', '.png')):
                     # Add variety of zoom and pan effects to static images
                     clip = ImageClip(visual_file).set_duration(duration_per_visual)
                     
-                    # Randomly choose an effect for variety
-                    effect = random.choice(['zoom_in', 'zoom_out', 'pan_right', 'pan_left', 'none'])
-                    
-                    if effect == 'zoom_in':
-                        # Smooth zoom in (Ken Burns effect)
-                        clip = clip.resize(lambda t: 1 + 0.15 * (t / duration_per_visual))
-                    elif effect == 'zoom_out':
-                        # Smooth zoom out
-                        clip = clip.resize(lambda t: 1.15 - 0.15 * (t / duration_per_visual))
+                    # Keep images static for long-form to avoid memory spikes
                     
                     clip = clip.set_position(('center', 'center'))
 
                 if clip:
-                    # Standardize clip size for YouTube horizontal format (1920x1080)
-                    clip = clip.resize(width=1920).set_position(('center', 'center'))
-                    
-                    # Add subtle fade transitions between clips for smoother viewing
-                    if i > 0:  # Not the first clip
-                        clip = clip.crossfadein(0.5)
-                    if i < len(visual_files) - 1:  # Not the last clip
-                        clip = clip.crossfadeout(0.5)
+                    # After cropping to 16:9, simply resize to target size and set duration
+                    try:
+                        clip = clip.resize((TARGET_W, TARGET_H)).set_duration(duration_per_visual)
+                    except Exception:
+                        clip = clip.set_duration(duration_per_visual)
                     
                     clips.append(clip)
 
@@ -75,43 +94,55 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
             print("No valid clips were created. Aborting video creation.")
             return
 
-        # Concatenate with crossfade method for smooth transitions
-        final_clip = concatenate_videoclips(clips, method="compose")
-        final_clip = final_clip.set_duration(total_duration) # Ensure total duration matches voiceover
-        
-        # Add subtle vignette effect for professional look
-        try:
-            w, h = final_clip.size
-            vignette = ColorClip(size=(w, h), color=(0, 0, 0))
-            vignette = vignette.set_duration(total_duration)
-            vignette = vignette.set_opacity(0)
-            
-            def vignette_mask(get_frame, t):
-                import numpy as np
-                frame = get_frame(t)
-                h, w = frame.shape[:2]
-                # Create radial gradient for vignette
-                Y, X = np.ogrid[:h, :w]
-                center_y, center_x = h // 2, w // 2
-                dist_from_center = np.sqrt((X - center_x)**2 + (Y - center_y)**2)
-                max_dist = np.sqrt(center_x**2 + center_y**2)
-                mask = 1 - (dist_from_center / max_dist) * 0.25  # 25% darkening at edges (more subtle)
-                mask = np.clip(mask, 0.75, 1.0)  # Keep it subtle
-                return (frame * mask[:, :, np.newaxis]).astype('uint8')
-            
-            final_clip = final_clip.fl(vignette_mask)
-        except Exception as e:
-            print(f"Note: Vignette effect skipped: {e}")
+        # Simple concatenation for maximum stability; all clips are TARGET_W x TARGET_H
+        final_clip = concatenate_videoclips(clips, method="chain")
+        final_clip = final_clip.set_duration(total_duration)  # Ensure total duration matches voiceover
 
-        # Long-form videos don't need captions (viewers can use YouTube's auto-captions)
-        # Skipping caption generation for cleaner professional look
+        # Force final clip size to target dimensions as a safety net
+        try:
+            final_clip = final_clip.resize((TARGET_W, TARGET_H))
+        except Exception:
+            pass
         
-        # --- Add Captions (same style as Shorts) ---
+        # --- Add lightweight hard subtitles using TextClip (no heavy images) ---
         if script_text:
             try:
-                final_clip = caption_generator.add_captions_to_video(final_clip, script_text, total_duration)
+                words = script_text.split()
+                phrases = []
+                current = []
+                for w in words:
+                    current.append(w)
+                    if len(current) >= 7 or w.endswith((".", "!", "?")):
+                        phrases.append(" ".join(current))
+                        current = []
+                if current:
+                    phrases.append(" ".join(current))
+
+                if phrases:
+                    time_per = total_duration / len(phrases)
+                    caption_clips = []
+                    t = 0.0
+                    for phrase in phrases:
+                        txt = TextClip(
+                            phrase,
+                            fontsize=40,
+                            color="white",
+                            method="caption",
+                            size=(int(TARGET_W * 0.9), None),
+                            align="center",
+                        )
+                        txt = txt.set_position(("center", int(TARGET_H * 0.85)))
+                        txt = txt.set_start(t).set_duration(min(time_per, total_duration - t))
+                        caption_clips.append(txt)
+                        t += time_per
+                        if t >= total_duration:
+                            break
+
+                    if caption_clips:
+                        final_clip = CompositeVideoClip([final_clip] + caption_clips)
+                        print(f"✨ Added {len(caption_clips)} text caption segments (TextClip)")
             except Exception as e:
-                print(f"Warning: Could not add captions: {e}")
+                print(f"Warning: Could not add text captions: {e}")
                 print("Continuing without captions...")
 
         # --- Audio Composition ---
@@ -142,7 +173,7 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
                                   remove_temp=True,
                                   fps=30,  # Smooth 30fps for better quality
                                   preset='medium',  # Balance between quality and encoding speed
-                                  bitrate="10000k",  # Higher bitrate for long-form content
+                      bitrate="6000k",  # Slightly lower bitrate for faster encoding
                                   threads=4,  # Use multiple threads for faster encoding
                                   logger=None)  # Reduce memory overhead from logging
         
@@ -156,8 +187,17 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
             if isinstance(clip, (VideoFileClip, ImageClip)):
                 clip.close()
         if 'voiceover' in locals() and voiceover:
-            voiceover.close()
+            try:
+                voiceover.close()
+            except Exception:
+                pass
         if 'background_music' in locals() and background_music:
-            background_music.close()
+            try:
+                background_music.close()
+            except Exception:
+                pass
         if 'final_clip' in locals() and final_clip:
-            final_clip.close()
+            try:
+                final_clip.close()
+            except Exception:
+                pass
