@@ -1,4 +1,5 @@
 import os
+import base64
 from dotenv import load_dotenv
 import topic_finder
 import script_generator
@@ -9,11 +10,34 @@ import youtube_uploader
 import music_finder
 import re
 
+def setup_credentials():
+    """Decode credentials from environment variables for Render.com deployment."""
+    # Decode client_secret.json if provided as base64
+    if os.getenv('CLIENT_SECRET_BASE64'):
+        try:
+            secret_content = base64.b64decode(os.getenv('CLIENT_SECRET_BASE64'))
+            with open('client_secret.json', 'wb') as f:
+                f.write(secret_content)
+            print("✓ Decoded client_secret.json from environment")
+        except Exception as e:
+            print(f"Warning: Could not decode CLIENT_SECRET_BASE64: {e}")
+    
+    # Decode token.pickle if provided as base64
+    if os.getenv('TOKEN_PICKLE_BASE64'):
+        try:
+            token_content = base64.b64decode(os.getenv('TOKEN_PICKLE_BASE64'))
+            with open('token.pickle', 'wb') as f:
+                f.write(token_content)
+            print("✓ Decoded token.pickle from environment")
+        except Exception as e:
+            print(f"Warning: Could not decode TOKEN_PICKLE_BASE64: {e}")
+
 def main():
     """
     Main function to run the YouTube Shorts workflow.
     """
     load_dotenv()
+    setup_credentials()
 
     print("Finding trending topic...")
     try:
@@ -52,6 +76,13 @@ def main():
     voiceover.generate_voiceover("voiceover.mp3", cleaned_script)
     voiceover_file = "voiceover.mp3"
     print(f"Voiceover saved to {voiceover_file}")
+    
+    # Calculate voiceover duration to optimize video downloads
+    from moviepy.editor import AudioFileClip
+    audio_clip = AudioFileClip(voiceover_file)
+    voiceover_duration = int(audio_clip.duration)
+    audio_clip.close()
+    print(f"Voiceover duration: {voiceover_duration}s")
 
     print("Finding background music...")
     music_file = music_finder.find_and_download_music("upbeat")
@@ -61,7 +92,8 @@ def main():
         print("Could not find background music.")
 
     print("Gathering visuals...")
-    visual_files = visuals.get_visuals(topic, 5)
+    # Pass target duration to avoid downloading unnecessarily long videos
+    visual_files = visuals.get_visuals(topic, 5, target_duration=voiceover_duration)
     print(f"Found {len(visual_files)} visuals.")
 
     if not visual_files:

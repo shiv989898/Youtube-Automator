@@ -77,7 +77,7 @@ def create_caption_image(text, width=1920, height=200):
     draw = ImageDraw.Draw(img)
     
     # Use professional font size for horizontal format
-    font_size = 80  # Smaller than shorts for better horizontal viewing
+    font_size = 60  # Reduced font size for better viewing
     try:
         # Try to use Arial Black or Bold for impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)

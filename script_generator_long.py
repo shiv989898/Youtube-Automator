@@ -1,28 +1,83 @@
 import os
+import random
+from typing import List
+
 import google.generativeai as genai
 from dotenv import load_dotenv
-import random
 
 load_dotenv()
+
+
+ADDITIONAL_GEMINI_KEYS = [
+    "AIzaSyALmmwiitmnBKfvY7T90VjqzPgtFWZfTbc",
+    "AIzaSyCypWr91HUHQkDIIpIUIiNMetZWsQVzWV8",
+    "AIzaSyCdo1PkGHcGcSpuZ7ote4pJQtRhZALPzn0",
+]
+
+
+def _collect_gemini_keys() -> List[str]:
+    keys = []
+
+    multi_env = os.getenv("GEMINI_API_KEYS")
+    if multi_env:
+        keys.extend([key.strip() for key in multi_env.split(",") if key.strip()])
+
+    single_env = os.getenv("GEMINI_API_KEY")
+    if single_env:
+        keys.append(single_env.strip())
+
+    keys.extend(ADDITIONAL_GEMINI_KEYS)
+
+    deduped = []
+    for key in keys:
+        if key and key not in deduped:
+            deduped.append(key)
+    return deduped
+
+
+def _safe_key_label(key: str) -> str:
+    return f"{key[:6]}..." if key else "<missing>"
+
+
+def _generate_with_retry(prompt: str) -> str:
+    keys = _collect_gemini_keys()
+    if not keys:
+        raise ValueError("No Gemini API keys available. Please configure GEMINI_API_KEY or GEMINI_API_KEYS in your environment.")
+
+    shuffled = keys[:]
+    random.shuffle(shuffled)
+
+    last_error = None
+    for key in shuffled:
+        try:
+            genai.configure(api_key=key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            response = model.generate_content(prompt)
+            if response and hasattr(response, 'text') and response.text:
+                print(f"Long-form script generated successfully by Gemini using key {_safe_key_label(key)}.")
+                return response.text
+            else:
+                print(f"Gemini returned an invalid response with key {_safe_key_label(key)}. Trying another key...")
+        except Exception as exc:
+            last_error = exc
+            print(f"Gemini request failed with key {_safe_key_label(key)}: {exc}. Trying another key...")
+
+    if last_error:
+        raise last_error
+    raise ValueError("Gemini returned invalid responses for all configured keys.")
 
 def generate_long_script(topic):
     """
     Generates a script for a long-form YouTube video using the Google Gemini API.
-    Script length varies between 3-8 minutes for engaging long-form content.
+    Script length is capped at 3 minutes for concise, engaging content.
     """
+    print("  ⏳ Preparing AI prompt...", end="", flush=True)
     try:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in .env file.")
-            
-        genai.configure(api_key=api_key)
-        
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
-        # Randomly choose script length for long-form variety
-        target_duration = random.choice([180, 240, 300, 360, 420, 480])  # 3-8 minutes
+        # Script length is now capped at 3 minutes (180 seconds)
+        target_duration = random.choice([60, 90, 120, 150, 180])  # 1-3 minutes
         word_count_min = int(target_duration * 2.2)  # ~2.2 words per second
         word_count_max = int(target_duration * 2.5)  # ~2.5 words per second
+        print("\r  ✅ Prompt ready, contacting AI..." + " " * 20, end="", flush=True)
         
         prompt = f"""
         Create a comprehensive script for a {target_duration // 60}-minute YouTube video about the topic: "{topic}".
@@ -56,14 +111,10 @@ def generate_long_script(topic):
         Now, generate a {target_duration // 60}-minute script for: "{topic}".
         """
         
-        response = model.generate_content(prompt)
-        
-        # Check for valid response and text
-        if response and hasattr(response, 'text') and response.text:
-            print(f"Long-form script generated successfully by Gemini ({target_duration // 60} minutes).")
-            return response.text
-        else:
-            raise ValueError("Gemini returned an empty or invalid response.")
+        response_text = _generate_with_retry(prompt)
+        if response_text:
+            return response_text
+        raise ValueError("Gemini returned empty responses across all keys.")
             
     except Exception as e:
         print(f"Error generating long-form script with Gemini: {e}")

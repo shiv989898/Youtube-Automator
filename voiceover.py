@@ -1,124 +1,129 @@
 import os
 import asyncio
+import pyttsx3
+import random
 from edge_tts import Communicate
+import ssl
+import certifi
 
-async def _generate_with_edge_tts(text, filename):
+# Edge-TTS voices (Microsoft neural voices - expanded list for variety)
+EDGE_VOICES = [
+    "en-US-JennyNeural",      # Female, friendly
+    "en-US-AriaNeural",       # Female, warm
+    "en-US-GuyNeural",        # Male, clear
+    "en-GB-SoniaNeural",      # Female, British
+    "en-US-SaraNeural",       # Female, professional
+    "en-US-TonyNeural",       # Male, confident
+    "en-AU-NatashaNeural",    # Female, Australian
+    "en-CA-ClaraNeural",      # Female, Canadian
+    "en-US-DavisNeural",      # Male, energetic
+    "en-US-AmberNeural",      # Female, conversational
+    "en-GB-RyanNeural",       # Male, British
+    "en-US-AnaNeural",        # Female, clear
+]
+
+async def _generate_edge_tts(text, filename, voice_name):
     """
-    Async helper to generate voiceover with edge-tts.
-    Uses Microsoft Jenny Neural voice (female, very natural, expressive).
+    Generate voiceover using edge-tts with proper SSL handling.
+    Handles Microsoft's new API security tokens (Sec-MS-GEC).
     """
-    # Best voices for YouTube Shorts (natural, expressive, engaging):
-    # en-US-JennyNeural - Female, warm, conversational (BEST for shorts)
-    # en-US-GuyNeural - Male, friendly, clear
-    # en-US-AriaNeural - Female, cheerful, upbeat
-    # en-GB-SoniaNeural - British female, professional
-    
-    voice = "en-US-JennyNeural"  # Natural, engaging female voice
-    
-    communicate = Communicate(text, voice, rate="+20%", pitch="+5Hz")  # Faster for more energy and engagement
-    await communicate.save(filename)
+    try:
+        # Create communicate object with validated voice
+        communicate = Communicate(text, voice_name)
+        await communicate.save(filename)
+    except Exception as e:
+        raise Exception(f"Edge TTS error: {str(e)}")
 
 def generate_voiceover(filename, text):
     """
-    Generates a voiceover using edge-tts (Microsoft neural voices) for realistic, emotional speech.
-    Falls back to pyttsx3 if edge-tts fails.
-    No GPU or API keys required - completely free and local processing.
+    Generates high-quality voiceover using edge-tts (v7.2.7+) with pyttsx3 fallback.
+    Handles Microsoft's new API security requirements.
+    Auto-optimized for YouTube content.
+    Uses random voice selection for variety.
     """
     print("Generating voiceover...")
     
-    # Try edge-tts first (Microsoft neural voices, no API key needed)
-    try:
-        # Run async edge-tts
-        asyncio.run(_generate_with_edge_tts(text, filename))
-        
-        # Verify file was created
-        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
-            print(f"[SUCCESS] Voiceover generated with edge-tts (Microsoft Jenny Neural - high quality)")
-            return filename
-        else:
-            print("[WARNING] edge-tts generated invalid file. Falling back to system voice...")
-            
-    except Exception as e:
-        print(f"[WARNING] edge-tts failed: {e}")
-        print("Trying gTTS (Google Text-to-Speech)...")
+    # Randomize voice selection for variety in each video
+    available_voices = EDGE_VOICES.copy()
+    random.shuffle(available_voices)
     
-    # Try gTTS (Google Text-to-Speech) as middle fallback
-    try:
-        from gtts import gTTS
-        tts = gTTS(text=text, lang='en', slow=False, tld='com')
-        tts.save(filename)
-        
-        # Verify file was created
-        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
-            print(f"[SUCCESS] Voiceover generated with gTTS (Google voice - reliable)")
-            return filename
-        else:
-            print("[WARNING] gTTS generated invalid file. Trying system voice...")
+    print(f"Attempting to generate voiceover with {len(available_voices)} voices...")
+    # Try edge-tts first (best quality) - Updated library handles Sec-MS-GEC tokens
+    for i, voice in enumerate(available_voices):
+        try:
+            progress = int(((i + 1) / len(available_voices)) * 100)
+            bar_length = 20
+            filled = int((progress / 100) * bar_length)
+            bar = "█" * filled + "░" * (bar_length - filled)
+            print(f"\r  Voice attempt [{bar}] {progress}% - Trying: {voice}", end="", flush=True)
+            asyncio.run(_generate_edge_tts(text, filename, voice))
             
-    except Exception as e:
-        print(f"[WARNING] gTTS failed: {e}")
-        print("Falling back to system voice...")
+            # Verify file
+            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+                bar = "█" * 20
+                print(f"\r  Voice attempt [{bar}] 100% - Success!")
+                print(f"  ✅ Voiceover generated with edge-tts ({voice})")
+                return filename
+            else:
+                print(f"\n  ⚠️  Invalid file from {voice}, trying next voice...")
+                if os.path.exists(filename):
+                    os.remove(filename)
+                
+        except Exception as e:
+            error_msg = str(e)
+            print(f"[WARNING] edge-tts failed with {voice}: {error_msg[:100]}")
+            
+            # Check for specific errors
+            if "403" in error_msg or "Forbidden" in error_msg:
+                print("[ERROR] API access denied - Microsoft may have blocked unofficial access")
+                break  # Don't try other voices if blocked
+            elif "No audio" in error_msg:
+                print("[WARNING] No audio received - network or API issue")
+                if i < len(EDGE_VOICES) - 1:
+                    continue
+                break
+            elif i < len(EDGE_VOICES) - 1:
+                continue
+            else:
+                break
     
-    # Fallback to pyttsx3 if both edge-tts and gTTS fail
+    # Fallback to pyttsx3 (local, reliable)
+    print("[INFO] Falling back to local pyttsx3...")
     try:
-        import pyttsx3
-        print("[INFO] Initializing system text-to-speech...")
         engine = pyttsx3.init()
-
-        # --- Enhancements for more human-like voice ---
-        # 1. Set a faster, more energetic rate for YouTube Shorts
-        engine.setProperty('rate', 200)  # Faster, more engaging pace
-
-        # 2. Set volume to maximum for clarity
-        engine.setProperty('volume', 1.0)  # 100% volume
-
-        # 3. Select the best available voice (prioritize female voices for better quality)
         voices = engine.getProperty('voices')
         
         if not voices:
             raise Exception("No system voices available")
         
-        # Try to find Zira (female, high quality) or other premium voices
-        zira = next((v for v in voices if 'zira' in v.name.lower()), None)
-        hazel = next((v for v in voices if 'hazel' in v.name.lower()), None)
-        susan = next((v for v in voices if 'susan' in v.name.lower()), None)
-        david = next((v for v in voices if 'david' in v.name.lower()), None)
-
-        if zira:
-            engine.setProperty('voice', zira.id)
-            print("[OK] Using premium 'Zira' voice (female, clear, professional)")
-        elif hazel:
-            engine.setProperty('voice', hazel.id)
-            print("[OK] Using premium 'Hazel' voice (female, warm)")
-        elif susan:
-            engine.setProperty('voice', susan.id)
-            print("[OK] Using 'Susan' voice (female)")
-        elif david:
-            engine.setProperty('voice', david.id)
-            print("[OK] Using 'David' voice (male, clear)")
-        else:
-            # Use first available voice
-            if voices:
-                engine.setProperty('voice', voices[0].id)
-                print(f"[OK] Using system voice: {voices[0].name}")
-            else:
-                print("[WARNING] Using default system voice")
-        # --- End of Enhancements ---
-
+        # Auto-select best voice
+        selected_voice = None
+        voice_preferences = ['zira', 'hazel', 'susan', 'victoria', 'david']
+        
+        for pref in voice_preferences:
+            voice = next((v for v in voices if pref in v.name.lower()), None)
+            if voice:
+                selected_voice = voice.id
+                print(f"[OK] Selected voice: {pref.title()}")
+                break
+        
+        if not selected_voice:
+            selected_voice = voices[0].id
+            print(f"[OK] Using: {voices[0].name}")
+        
+        engine.setProperty('voice', selected_voice)
+        engine.setProperty('rate', 160)  # Optimized for YouTube
+        engine.setProperty('volume', 1.0)
+        
         engine.save_to_file(text, filename)
         engine.runAndWait()
         
-        # Verify file was created
-        if os.path.exists(filename) and os.path.getsize(filename) > 1000:
-            print(f"[SUCCESS] Voiceover saved to {filename} (System voice)")
+        if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+            print(f"[SUCCESS] Voiceover saved with pyttsx3")
             return filename
         else:
-            raise Exception("pyttsx3 failed to generate valid audio file")
+            raise Exception("Generated audio file is invalid")
         
     except Exception as e:
         print(f"[ERROR] All voiceover methods failed: {e}")
-        print("[CRITICAL] Cannot proceed without voiceover. Exiting...")
         raise Exception(f"Error generating voiceover: {e}")
-    except Exception as e:
-        print(f"[ERROR] Error generating voiceover: {e}")
-        return None

@@ -1,9 +1,71 @@
 import os
+import random
+from typing import List
+
 import google.generativeai as genai
 from dotenv import load_dotenv
-import random
 
 load_dotenv()
+
+
+ADDITIONAL_GEMINI_KEYS = [
+    "AIzaSyALmmwiitmnBKfvY7T90VjqzPgtFWZfTbc",
+    "AIzaSyCypWr91HUHQkDIIpIUIiNMetZWsQVzWV8",
+    "AIzaSyCdo1PkGHcGcSpuZ7ote4pJQtRhZALPzn0",
+]
+
+
+def _collect_gemini_keys() -> List[str]:
+    """Gather every available API key, prioritizing environment variables."""
+    keys = []
+
+    multi_env = os.getenv("GEMINI_API_KEYS")
+    if multi_env:
+        keys.extend([key.strip() for key in multi_env.split(",") if key.strip()])
+
+    single_env = os.getenv("GEMINI_API_KEY")
+    if single_env:
+        keys.append(single_env.strip())
+
+    keys.extend(ADDITIONAL_GEMINI_KEYS)
+
+    deduped = []
+    for key in keys:
+        if key and key not in deduped:
+            deduped.append(key)
+    return deduped
+
+
+def _safe_key_label(key: str) -> str:
+    return f"{key[:6]}..." if key else "<missing>"
+
+
+def _generate_with_retry(prompt: str) -> str:
+    keys = _collect_gemini_keys()
+    if not keys:
+        raise ValueError("No Gemini API keys available. Please set GEMINI_API_KEY or GEMINI_API_KEYS in your environment.")
+
+    shuffled = keys[:]
+    random.shuffle(shuffled)
+
+    last_error = None
+    for key in shuffled:
+        try:
+            genai.configure(api_key=key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            response = model.generate_content(prompt)
+            if response and hasattr(response, 'text') and response.text:
+                print(f"Script generated successfully by Gemini (key {_safe_key_label(key)}).")
+                return response.text
+            else:
+                print(f"Gemini returned an invalid response with key {_safe_key_label(key)}. Trying another key...")
+        except Exception as exc:
+            last_error = exc
+            print(f"Gemini request failed with key {_safe_key_label(key)}: {exc}. Trying another key...")
+
+    if last_error:
+        raise last_error
+    raise ValueError("Gemini returned invalid responses for all configured keys.")
 
 def generate_script(topic):
     """
@@ -11,14 +73,6 @@ def generate_script(topic):
     Script length varies between 20-40 seconds for variety.
     """
     try:
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise ValueError("GEMINI_API_KEY not found in .env file.")
-            
-        genai.configure(api_key=api_key)
-        
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        
         # Randomly choose script length for variety
         target_duration = random.choice([20, 25, 30, 35, 40])
         word_count_min = int(target_duration * 2.2)  # ~2.2 words per second
@@ -52,16 +106,12 @@ def generate_script(topic):
         Now, generate a {target_duration}-second script for: "{topic}".
         """
         
-        response = model.generate_content(prompt)
+        response_text = _generate_with_retry(prompt)
+        if response_text:
+            return response_text
         
-        # Check for valid response and text
-        if response and hasattr(response, 'text') and response.text:
-            print("Script generated successfully by Gemini.")
-            return response.text
-        else:
-            # Fallback in case the API returns an empty or invalid response
-            print(f"Gemini API returned an invalid response: {response}. Using fallback template.")
-            return f"**Host:** Let's talk about {topic}! It's a huge subject, so here's a quick look. First, the basics. Then, a surprising fact. And finally, what the future holds. Thanks for watching!"
+        print("Gemini API returned empty responses across all keys. Using fallback template.")
+        return f"**Host:** Let's talk about {topic}! It's a huge subject, so here's a quick look. First, the basics. Then, a surprising fact. And finally, what the future holds. Thanks for watching!"
 
     except Exception as e:
         print(f"Error generating script with Gemini: {e}")

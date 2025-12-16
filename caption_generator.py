@@ -35,35 +35,35 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     for phrase in phrases:
         if not phrase.strip():
             continue
-        
-            try:
-                # Scaled caption dimensions to reduce memory usage for long-form videos
-                cap_width = max(200, int(video_clip.w * 0.9 * scale))
-                cap_height = max(60, int(200 * scale))
+        try:
+            # Scaled caption dimensions to reduce memory usage for long-form videos
+            # Slightly reduced height for long-format stability
+            cap_width = max(200, min(1920, int(video_clip.w * 0.9 * scale)))
+            cap_height = max(50, min(200, int(160 * scale)))
 
-                # Create caption image
-                caption_img = create_caption_image(
-                    phrase.strip(),
-                    width=cap_width,
-                    height=cap_height
-                )
+            # Create caption image
+            caption_img = create_caption_image(
+                phrase.strip(),
+                width=cap_width,
+                height=cap_height
+            )
 
-                # Convert to ImageClip (Pillow->numpy uint8 helps keep memory down)
-                img_clip = ImageClip(caption_img)
-                # Position lower-middle; use slightly lower placement for long-form
-                position_y = int(video_clip.h * (0.65 if scale < 0.9 else 0.6))
-                img_clip = img_clip.set_position(('center', position_y))
-                img_clip = img_clip.set_start(current_time)
-                img_clip = img_clip.set_duration(min(time_per_phrase, voiceover_duration - current_time))
+            # Convert to ImageClip (Pillow->numpy uint8 helps keep memory down)
+            img_clip = ImageClip(caption_img)
+            # Position lower-middle; use slightly lower placement for long-form when scaled
+            position_y = int(video_clip.h * (0.78 if scale < 0.9 else 0.7))
+            img_clip = img_clip.set_position(('center', position_y))
+            img_clip = img_clip.set_start(current_time)
+            img_clip = img_clip.set_duration(min(time_per_phrase, voiceover_duration - current_time))
 
-                caption_clips.append(img_clip)
-                current_time += time_per_phrase
+            caption_clips.append(img_clip)
+            current_time += time_per_phrase
 
-                if current_time >= voiceover_duration:
-                    break
-            except Exception as e:
-                print(f"Warning: Could not create caption for phrase '{phrase[:30]}...': {e}")
-                continue
+            if current_time >= voiceover_duration:
+                break
+        except Exception as e:
+            print(f"Warning: Could not create caption for phrase '{phrase[:30]}...': {e}")
+            continue
     
     # Composite video with captions
     if caption_clips:
@@ -86,7 +86,7 @@ def create_caption_image(text, width=1080, height=350):
     draw = ImageDraw.Draw(img)
     
     # Determine font size relative to width for better scaling across sizes
-    font_size = max(18, int(width * 0.12))
+    font_size = max(18, int(width * 0.085))
     try:
         # Try to use Arial Black or Bold for maximum impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)

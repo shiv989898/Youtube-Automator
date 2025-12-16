@@ -5,6 +5,11 @@ import math
 import random
 import caption_generator
 
+# Target 720x1280 output keeps Shorts-friendly 9:16 while lowering memory load
+TARGET_WIDTH = 720
+TARGET_HEIGHT = 1280
+TARGET_FPS = 24
+
 def create_video(visual_files, voiceover_file, output_file, music_file=None, script_text=None):
     """
     Combines visuals and audio into a final video. The duration of each visual
@@ -15,7 +20,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
     clips = []
     
     try:
-        voiceover = AudioFileClip(voiceover_file)
+        voiceover = AudioFileClip(voiceover_file).volumex(0.9)
         total_duration = voiceover.duration
         duration_per_visual = math.ceil(total_duration / len(visual_files)) if visual_files else 0
 
@@ -67,14 +72,20 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                     clip = clip.set_position(('center', 'center'))
 
                 if clip:
-                    # Standardize clip size for YouTube Shorts (1080x1920)
-                    clip = clip.resize(height=1920).set_position(('center', 'center'))
+                    # Standardize clip size for YouTube Shorts (reduced resolution to save memory)
+                    clip = clip.resize(height=TARGET_HEIGHT)
+                    if clip.w > TARGET_WIDTH:
+                        clip = clip.fx(vfx.crop, width=TARGET_WIDTH, x_center=clip.w / 2)
+                    elif clip.w < TARGET_WIDTH:
+                        background = ColorClip(size=(TARGET_WIDTH, TARGET_HEIGHT), color=(0, 0, 0)).set_duration(clip.duration)
+                        clip = CompositeVideoClip([background, clip.set_position(('center', 'center'))], size=(TARGET_WIDTH, TARGET_HEIGHT))
+                    clip = clip.set_position(('center', 'center')).set_duration(duration_per_visual)
                     
-                    # Add subtle fade transitions between clips for smoother viewing
+                    # Shorter fades to reduce overlapping frames in memory
                     if i > 0:  # Not the first clip
-                        clip = clip.crossfadein(0.3)
+                        clip = clip.crossfadein(0.2)
                     if i < len(visual_files) - 1:  # Not the last clip
-                        clip = clip.crossfadeout(0.3)
+                        clip = clip.crossfadeout(0.2)
                     
                     clips.append(clip)
 
@@ -87,31 +98,12 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
 
         # Concatenate with crossfade method for smooth transitions
         final_clip = concatenate_videoclips(clips, method="compose")
-        final_clip = final_clip.set_duration(total_duration) # Ensure total duration matches voiceover
+        final_clip = final_clip.resize((TARGET_WIDTH, TARGET_HEIGHT))
+        final_clip = final_clip.set_fps(TARGET_FPS)
+        final_clip = final_clip.set_duration(total_duration)  # Ensure total duration matches voiceover
         
-        # Add subtle vignette effect for professional look
-        try:
-            w, h = final_clip.size
-            vignette = ColorClip(size=(w, h), color=(0, 0, 0))
-            vignette = vignette.set_duration(total_duration)
-            vignette = vignette.set_opacity(0)
-            
-            def vignette_mask(get_frame, t):
-                import numpy as np
-                frame = get_frame(t)
-                h, w = frame.shape[:2]
-                # Create radial gradient for vignette
-                Y, X = np.ogrid[:h, :w]
-                center_y, center_x = h // 2, w // 2
-                dist_from_center = np.sqrt((X - center_x)**2 + (Y - center_y)**2)
-                max_dist = np.sqrt(center_x**2 + center_y**2)
-                mask = 1 - (dist_from_center / max_dist) * 0.3  # 30% darkening at edges
-                mask = np.clip(mask, 0.7, 1.0)  # Keep it subtle
-                return (frame * mask[:, :, np.newaxis]).astype('uint8')
-            
-            final_clip = final_clip.fl(vignette_mask)
-        except Exception as e:
-            print(f"Note: Vignette effect skipped: {e}")
+        # Skip vignette effect to reduce memory usage on high-resolution sources
+        print("Note: Vignette effect disabled for stability")
 
         # --- Add Captions ---
         if script_text:
@@ -125,7 +117,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         audio_clips = [voiceover]
         if music_file:
             try:
-                background_music = AudioFileClip(music_file).volumex(0.08) # Slightly lower music for better voice clarity
+                background_music = AudioFileClip(music_file).volumex(0.088) # Slightly louder music for energy
                 # Loop or trim music to match the video duration
                 if background_music.duration < total_duration:
                     background_music = background_music.fx(vfx.loop, duration=total_duration)
@@ -147,9 +139,11 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                                   audio_codec="aac",
                                   temp_audiofile='temp-audio.m4a',
                                   remove_temp=True,
-                                  fps=30,  # Smooth 30fps for better quality
-                                  preset='medium',  # Balance between quality and encoding speed
-                                  bitrate="8000k")  # High bitrate for crisp quality
+                                  fps=TARGET_FPS,  # Reduced FPS for lower memory footprint
+                                  preset='faster',  # Faster encoding speed
+                                  bitrate="8000k",  # High bitrate for crisp quality
+                                  threads=8,  # Use more CPU threads
+                                  logger='bar')  # Progress bar keeps terminal responsive
         
         print(f"✨ Video created successfully with professional effects: {output_file}")
 

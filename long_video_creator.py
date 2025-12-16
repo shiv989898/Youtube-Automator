@@ -1,5 +1,5 @@
 from moviepy.editor import (VideoFileClip, AudioFileClip, CompositeAudioClip, 
-                            ImageClip, TextClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
+                            ImageClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
 from moviepy.video.fx import all as vfx
 from moviepy.video.fx.all import crop
 import math
@@ -11,28 +11,36 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
     Creates a long-form horizontal video (1920x1080) for regular YouTube content.
     Similar to shorts but optimized for longer viewing and horizontal format.
     """
-    print("Creating long-form horizontal video...")
+    print("\n📹 Initializing long-form video creation...")
     clips = []
     # Target horizontal (16:9) size for long-form videos (720p to reduce memory)
     TARGET_W = 1280
     TARGET_H = 720
     
     try:
-        voiceover = AudioFileClip(voiceover_file)
+        voiceover = AudioFileClip(voiceover_file).volumex(0.9)
         total_duration = voiceover.duration
 
-        # Cap maximum duration for long-form videos to avoid huge memory usage
-        max_duration = 480  # seconds (8 minutes)
+        # Cap maximum duration for long-form videos to 3 minutes
+        max_duration = 180  # seconds (3 minutes)
         if total_duration > max_duration:
-            print(f"Note: Capping long-form video duration from {total_duration:.1f}s to {max_duration}s to reduce memory usage.")
+            print(f"Note: Capping long-form video duration from {total_duration:.1f}s to {max_duration}s.")
             total_duration = max_duration
+            voiceover = voiceover.subclip(0, max_duration) # Trim the voiceover clip
+            
         duration_per_visual = math.ceil(total_duration / len(visual_files)) if visual_files else 0
 
         if duration_per_visual == 0:
             print("No visuals or zero duration. Cannot create video.")
             return
 
+        total_clips = len(visual_files)
         for i, visual_file in enumerate(visual_files):
+            progress_pct = int((i / total_clips) * 100)
+            bar_length = 20
+            filled = int((progress_pct / 100) * bar_length)
+            bar = "█" * filled + "░" * (bar_length - filled)
+            print(f"\r⏳ Processing clips: [{bar}] {progress_pct}% ({i}/{total_clips})", end="", flush=True)
             clip = None
             try:
                 if visual_file.lower().endswith(('.mp4', '.mov')):
@@ -91,11 +99,17 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
                 print(f"Warning: Could not process visual file {visual_file}: {e}")
 
         if not clips:
-            print("No valid clips were created. Aborting video creation.")
+            print("\n❌ No valid clips were created. Aborting video creation.")
             return
 
+        bar = "█" * 20
+        print(f"\r⏳ Processing clips: [{bar}] 100% ({len(clips)}/{total_clips})")
+        print(f"✅ Processed {len(clips)} clips successfully!")
+        print("\n⏳ Concatenating clips (0%)...", end="", flush=True)
         # Simple concatenation for maximum stability; all clips are TARGET_W x TARGET_H
         final_clip = concatenate_videoclips(clips, method="chain")
+        print("\r⏳ Concatenating clips (100%)...")
+        print("✅ Clips concatenated!")
         final_clip = final_clip.set_duration(total_duration)  # Ensure total duration matches voiceover
 
         # Force final clip size to target dimensions as a safety net
@@ -104,52 +118,15 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
         except Exception:
             pass
         
-        # --- Add lightweight hard subtitles using TextClip (no heavy images) ---
-        if script_text:
-            try:
-                words = script_text.split()
-                phrases = []
-                current = []
-                for w in words:
-                    current.append(w)
-                    if len(current) >= 7 or w.endswith((".", "!", "?")):
-                        phrases.append(" ".join(current))
-                        current = []
-                if current:
-                    phrases.append(" ".join(current))
-
-                if phrases:
-                    time_per = total_duration / len(phrases)
-                    caption_clips = []
-                    t = 0.0
-                    for phrase in phrases:
-                        txt = TextClip(
-                            phrase,
-                            fontsize=40,
-                            color="white",
-                            method="caption",
-                            size=(int(TARGET_W * 0.9), None),
-                            align="center",
-                        )
-                        txt = txt.set_position(("center", int(TARGET_H * 0.85)))
-                        txt = txt.set_start(t).set_duration(min(time_per, total_duration - t))
-                        caption_clips.append(txt)
-                        t += time_per
-                        if t >= total_duration:
-                            break
-
-                    if caption_clips:
-                        final_clip = CompositeVideoClip([final_clip] + caption_clips)
-                        print(f"✨ Added {len(caption_clips)} text caption segments (TextClip)")
-            except Exception as e:
-                print(f"Warning: Could not add text captions: {e}")
-                print("Continuing without captions...")
+        # --- Captions have been removed for performance ---
 
         # --- Audio Composition ---
+        print("\n⏳ Composing audio track (0%)...", end="", flush=True)
         audio_clips = [voiceover]
+        print("\r⏳ Composing audio track (33%)...", end="", flush=True)
         if music_file:
             try:
-                background_music = AudioFileClip(music_file).volumex(0.06) # Lower music volume for long-form content
+                background_music = AudioFileClip(music_file).volumex(0.066) # Slightly louder background bed
                 # Loop or trim music to match the video duration
                 if background_music.duration < total_duration:
                     background_music = background_music.fx(vfx.loop, duration=total_duration)
@@ -162,19 +139,24 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
             except Exception as e:
                 print(f"Warning: Could not process background music: {e}")
         
+        print("\r⏳ Composing audio track (66%)...", end="", flush=True)
         final_audio = CompositeAudioClip(audio_clips)
         final_clip.audio = final_audio
+        print("\r⏳ Composing audio track (100%)...")
+        print("✅ Audio composed!")
 
         # Write the final video file with optimized settings for YouTube
+        print("\n⏳ Rendering final video (this may take several minutes)...")
+        print("💡 Tip: MoviePy's progress bar below shows encoding progress\n")
         final_clip.write_videofile(output_file, 
                                   codec="libx264",
                                   audio_codec="aac",
                                   temp_audiofile='temp-audio-long.m4a',
                                   remove_temp=True,
-                                  fps=30,  # Smooth 30fps for better quality
-                                  preset='medium',  # Balance between quality and encoding speed
-                      bitrate="6000k",  # Slightly lower bitrate for faster encoding
-                                  threads=4,  # Use multiple threads for faster encoding
+                                  fps=24,  # 24fps for faster processing
+                                  preset='faster',  # Faster encoding speed
+                                  bitrate="6000k",  # Slightly lower bitrate for faster encoding
+                                  threads=8,  # Use more CPU threads
                                   logger=None)  # Reduce memory overhead from logging
         
         print(f"✨ Long-form video created successfully: {output_file}")
