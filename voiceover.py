@@ -89,19 +89,23 @@ def generate_voiceover(filename, text):
                 break
     
     # Fallback to gTTS (works well in cloud environments like GitHub Actions)
-    print("[INFO] Edge-TTS failed, trying gTTS (better for cloud environments)...")
+    print("[INFO] ⚠️ Edge-TTS failed (401 auth errors), switching to gTTS...")
     try:
-        tts = gTTS(text=text, lang='en', slow=False)
+        print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
+        tts = gTTS(text=text, lang='en', slow=False, tld='com')
         tts.save(filename)
         
         if os.path.exists(filename) and os.path.getsize(filename) > 5000:
-            print(f"[SUCCESS] Voiceover saved with gTTS: {filename}")
+            print(f"[SUCCESS] ✅ Voiceover successfully generated with gTTS!")
+            print(f"[INFO] 📁 File: {filename} ({os.path.getsize(filename)} bytes)")
             return filename
         else:
             raise Exception("gTTS generated invalid audio file")
     
     except Exception as gtts_error:
-        print(f"[WARNING] gTTS also failed: {gtts_error}")
+        print(f"[ERROR] ❌ gTTS failed: {gtts_error}")
+        import traceback
+        traceback.print_exc()
         
         # Last resort: pyttsx3 (local, reliable)
         print("[INFO] Falling back to local pyttsx3...")
