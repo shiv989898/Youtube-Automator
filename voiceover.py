@@ -136,49 +136,40 @@ def generate_voiceover(filename, text):
             return filename
         else:
             raise Exception("gTTS generated invalid audio file")
-    
     except Exception as gtts_error:
         print(f"[ERROR] ❌ gTTS failed: {gtts_error}")
         import traceback
         traceback.print_exc()
-        
+    
         # Last resort: pyttsx3 (local, reliable)
         print("[INFO] Falling back to local pyttsx3...")
         try:
             engine = pyttsx3.init()
             voices = engine.getProperty('voices')
-            
             if not voices:
                 raise Exception("No system voices available")
-            
             # Auto-select best voice
             selected_voice = None
             voice_preferences = ['zira', 'hazel', 'susan', 'victoria', 'david']
-            
             for pref in voice_preferences:
                 voice = next((v for v in voices if pref in v.name.lower()), None)
                 if voice:
                     selected_voice = voice.id
                     print(f"[OK] Selected voice: {pref.title()}")
                     break
-            
             if not selected_voice:
                 selected_voice = voices[0].id
                 print(f"[OK] Using: {voices[0].name}")
-            
             engine.setProperty('voice', selected_voice)
             engine.setProperty('rate', 160)  # Optimized for YouTube
             engine.setProperty('volume', 1.0)
-            
             engine.save_to_file(text, filename)
             engine.runAndWait()
-            
             if os.path.exists(filename) and os.path.getsize(filename) > 5000:
                 print(f"[SUCCESS] Voiceover saved with pyttsx3")
                 return filename
             else:
                 raise Exception("Generated audio file is invalid")
-            
         except Exception as e:
             print(f"[ERROR] All voiceover methods failed: {e}")
             raise Exception(f"Error generating voiceover: {e}")
