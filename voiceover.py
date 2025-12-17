@@ -38,7 +38,7 @@ async def _generate_edge_tts(text, filename, voice_name):
 
 def generate_voiceover(filename, text):
     """
-    Generates high-quality voiceover using edge-tts (v7.2.7+) with pyttsx3 fallback.
+    Generates high-quality voiceover using edge-tts (v7.2.7+) with gTTS and pyttsx3 fallbacks.
     Handles Microsoft's new API security requirements.
     Auto-optimized for YouTube content.
     Uses random voice selection for variety.
@@ -85,46 +85,7 @@ def generate_voiceover(filename, text):
                 break
     
     # Fallback to gTTS (works well in cloud environments like GitHub Actions)
-    print("[INFO] ⚠️ Edge-TTS failed (401 auth errors), switching to gTTS...")
-    try:
-        print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
-        tts = gTTS(text=text, lang='en', slow=False, tld='com')
-        tts.save(filename)
-        
-        if os.path.exists(filename) and os.path.getsize(filename) > 5000:
-            print(f"[SUCCESS] ✅ Voiceover successfully generated with gTTS!")
-            print(f"[INFO] 📁 File: {filename} ({os.path.getsize(filename)} bytes)")
-            return filename
-        else:
-            raise Exception("gTTS generated invalid audio file")
-    
-    except Exception as gtts_error:
-        print(f"[ERROR] ❌ gTTS failed: {gtts_error}")
-        import traceback
-        traceback.print_exc()
-        
-        # Last resort: pyttsx3 (local, reliable)
-        print("[INFO] Falling back to local pyttsx3...")
-        try:
-            engine = pyttsx3.init()
-            voices = engine.getProperty('voices')
-            
-            # Check for specific errors
-            if "403" in error_msg or "Forbidden" in error_msg:
-                print("[ERROR] API access denied - Microsoft may have blocked unofficial access")
-                break  # Don't try other voices if blocked
-            elif "No audio" in error_msg:
-                print("[WARNING] No audio received - network or API issue")
-                if i < len(EDGE_VOICES) - 1:
-                    continue
-                break
-            elif i < len(EDGE_VOICES) - 1:
-                continue
-            else:
-                break
-    
-    # Fallback to gTTS (works well in cloud environments like GitHub Actions)
-    print("[INFO] ⚠️ Edge-TTS failed (401 auth errors), switching to gTTS...")
+    print("\n[INFO] ⚠️ Edge-TTS failed, switching to gTTS...")
     try:
         print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
         tts = gTTS(text=text, lang='en', slow=False, tld='com')
@@ -140,7 +101,7 @@ def generate_voiceover(filename, text):
         print(f"[ERROR] ❌ gTTS failed: {gtts_error}")
         import traceback
         traceback.print_exc()
-    
+        
         # Last resort: pyttsx3 (local, reliable)
         print("[INFO] Falling back to local pyttsx3...")
         try:
@@ -148,6 +109,7 @@ def generate_voiceover(filename, text):
             voices = engine.getProperty('voices')
             if not voices:
                 raise Exception("No system voices available")
+            
             # Auto-select best voice
             selected_voice = None
             voice_preferences = ['zira', 'hazel', 'susan', 'victoria', 'david']
@@ -157,14 +119,17 @@ def generate_voiceover(filename, text):
                     selected_voice = voice.id
                     print(f"[OK] Selected voice: {pref.title()}")
                     break
+            
             if not selected_voice:
                 selected_voice = voices[0].id
                 print(f"[OK] Using: {voices[0].name}")
+            
             engine.setProperty('voice', selected_voice)
             engine.setProperty('rate', 160)  # Optimized for YouTube
             engine.setProperty('volume', 1.0)
             engine.save_to_file(text, filename)
             engine.runAndWait()
+            
             if os.path.exists(filename) and os.path.getsize(filename) > 5000:
                 print(f"[SUCCESS] Voiceover saved with pyttsx3")
                 return filename
