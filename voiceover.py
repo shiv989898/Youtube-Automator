@@ -44,6 +44,28 @@ def generate_voiceover(filename, text):
     """
     print("Generating voiceover...")
     
+    # Check if running in CI/CD environment (GitHub Actions, etc.)
+    is_ci = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
+    
+    if is_ci:
+        print("[INFO] 🤖 CI environment detected - using gTTS (edge-tts blocked in CI/CD)")
+        try:
+            print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
+            tts = gTTS(text=text, lang='en', slow=False, tld='com')
+            tts.save(filename)
+            
+            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+                print(f"[SUCCESS] ✅ Voiceover successfully generated with gTTS!")
+                print(f"[INFO] 📁 File: {filename} ({os.path.getsize(filename)} bytes)")
+                return filename
+            else:
+                raise Exception("gTTS generated invalid audio file")
+        except Exception as e:
+            print(f"[ERROR] ❌ gTTS failed in CI: {e}")
+            import traceback
+            traceback.print_exc()
+            raise Exception(f"Error generating voiceover in CI environment: {e}")
+    
     # Randomize voice selection for variety in each video
     available_voices = EDGE_VOICES.copy()
     random.shuffle(available_voices)
