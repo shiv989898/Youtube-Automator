@@ -85,29 +85,29 @@ def generate_voiceover(filename, text):
                 break
     
     # Fallback to gTTS (works well in cloud environments like GitHub Actions)
-    print("\n[INFO] Edge-TTS failed, trying gTTS (better for cloud environments)...")
+    print("[INFO] ⚠️ Edge-TTS failed (401 auth errors), switching to gTTS...")
+    try:
+        print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
+        tts = gTTS(text=text, lang='en', slow=False, tld='com')
+        tts.save(filename)
+        
+        if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+            print(f"[SUCCESS] ✅ Voiceover successfully generated with gTTS!")
+            print(f"[INFO] 📁 File: {filename} ({os.path.getsize(filename)} bytes)")
+            return filename
+        else:
+            raise Exception("gTTS generated invalid audio file")
+    
+    except Exception as gtts_error:
+        print(f"[ERROR] ❌ gTTS failed: {gtts_error}")
+        import traceback
+        traceback.print_exc()
+        
+        # Last resort: pyttsx3 (local, reliable)
+        print("[INFO] Falling back to local pyttsx3...")
         try:
-            progress = int(((i + 1) / len(available_voices)) * 100)
-            bar_length = 20
-            filled = int((progress / 100) * bar_length)
-            bar = "█" * filled + "░" * (bar_length - filled)
-            print(f"\r  Voice attempt [{bar}] {progress}% - Trying: {voice}", end="", flush=True)
-            asyncio.run(_generate_edge_tts(text, filename, voice))
-            
-            # Verify file
-            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
-                bar = "█" * 20
-                print(f"\r  Voice attempt [{bar}] 100% - Success!")
-                print(f"  ✅ Voiceover generated with edge-tts ({voice})")
-                return filename
-            else:
-                print(f"\n  ⚠️  Invalid file from {voice}, trying next voice...")
-                if os.path.exists(filename):
-                    os.remove(filename)
-                
-        except Exception as e:
-            error_msg = str(e)
-            print(f"[WARNING] edge-tts failed with {voice}: {error_msg[:100]}")
+            engine = pyttsx3.init()
+            voices = engine.getProperty('voices')
             
             # Check for specific errors
             if "403" in error_msg or "Forbidden" in error_msg:
