@@ -30,7 +30,8 @@ async def _generate_edge_tts(text, filename, voice_name):
     """
     try:
         # Create communicate object with validated voice
-        communicate = Communicate(text, voice_name)
+        # Force rate to +0% to avoid some server-side checks
+        communicate = Communicate(text, voice_name, rate="+0%")
         await communicate.save(filename)
     except Exception as e:
         raise Exception(f"Edge TTS error: {str(e)}")
@@ -44,35 +45,47 @@ def generate_voiceover(filename, text):
     """
     print("Generating voiceover...")
     
-    # Check if running in CI/CD environment (GitHub Actions, etc.)
-    is_ci = os.getenv('CI') == 'true' or os.getenv('GITHUB_ACTIONS') == 'true'
-    
-    if is_ci:
-        print("[INFO] 🤖 CI environment detected - using gTTS (edge-tts blocked in CI/CD)")
-        try:
-            print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
-            tts = gTTS(text=text, lang='en', slow=False, tld='com')
-            tts.save(filename)
-            
-            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
-                print(f"[SUCCESS] ✅ Voiceover successfully generated with gTTS!")
-                print(f"[INFO] 📁 File: {filename} ({os.path.getsize(filename)} bytes)")
-                return filename
-            else:
-                raise Exception("gTTS generated invalid audio file")
-        except Exception as e:
-            print(f"[ERROR] ❌ gTTS failed in CI: {e}")
-            import traceback
-            traceback.print_exc()
-            raise Exception(f"Error generating voiceover in CI environment: {e}")
-    
     # Randomize voice selection for variety in each video
     available_voices = EDGE_VOICES.copy()
     random.shuffle(available_voices)
     
     print(f"Attempting to generate voiceover with {len(available_voices)} voices...")
-    # Try edge-tts first (best quality) - Updated library handles Sec-MS-GEC tokens
+    
+    # Try edge-tts first (best quality)
     for i, voice in enumerate(available_voices):
+        try:
+            progress = int(((i + 1) / len(available_voices)) * 100)
+            bar_length = 20
+            filled = int((progress / 100) * bar_length)
+            bar = "█" * filled + "░" * (bar_length - filled)
+            print(f"\r  Voice attempt [{bar}] {progress}% - Trying: {voice}", end="", flush=True)
+            asyncio.run(_generate_edge_tts(text, filename, voice))
+            
+            # Verify file
+            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+                bar = "█" * 20
+                print(f"\r  Voice attempt [{bar}] 100% - Success!")
+                print(f"  ✅ Voiceover generated with edge-tts ({voice})")
+                return filename
+            else:
+                print(f"\n  ⚠️  Invalid file from {voice}, trying next voice...")
+                if os.path.exists(filename):
+                    os.remove(filename)
+        except Exception as e:
+            error_msg = str(e)
+            if "401" in error_msg or "Invalid response status" in error_msg:
+                # Don't print full error for 401s to keep logs clean, just continue
+                pass
+            else:
+                print(f"\n  [WARNING] edge-tts failed with {voice}: {e}")
+            
+            if i < len(available_voices) - 1:
+                continue
+            else:
+                break
+    
+    # Fallback to gTTS (works well in cloud environments like GitHub Actions)
+    print("\n[INFO] Edge-TTS failed, trying gTTS (better for cloud environments)...")
         try:
             progress = int(((i + 1) / len(available_voices)) * 100)
             bar_length = 20
