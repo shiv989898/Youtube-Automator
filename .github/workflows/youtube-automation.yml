@@ -25,7 +25,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg espeak espeak-ng libespeak1 espeak espeak-ng libespeak1
     
     - name: Install Python dependencies
       run: |
