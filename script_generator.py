@@ -8,11 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-ADDITIONAL_GEMINI_KEYS = [
-    "AIzaSyALmmwiitmnBKfvY7T90VjqzPgtFWZfTbc",
-    "AIzaSyCypWr91HUHQkDIIpIUIiNMetZWsQVzWV8",
-    "AIzaSyCdo1PkGHcGcSpuZ7ote4pJQtRhZALPzn0",
-]
+
+ADDITIONAL_GEMINI_KEYS = []  # No hardcoded keys, use environment variables only
 
 
 def _collect_gemini_keys() -> List[str]:
