@@ -1,3 +1,3 @@
 @echo off
-cd /d "C:\Users\shivg\OneDrive\Desktop\yt workflow"
+cd /d "%~dp0"
 ".\.venv\Scripts\python.exe" main.py
