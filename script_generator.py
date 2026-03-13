@@ -85,15 +85,23 @@ def generate_script(topic):
         - Easy to understand
         - Punchy and concise
         - Exciting and curious in tone
+        - Optimized for audience retention from second 0
+
+        Retention rules:
+        - First line must be a strong hook (no greeting, no intro fluff)
+        - Keep sentence length short and high-energy
+        - Introduce one curiosity twist in the middle ("but here's the catch" style)
+        - End with a quick payoff plus CTA
+        - Avoid generic filler like "today we're talking about"
         
         Structure it with clear "Host:" cues for the voiceover.
         End with a quick call to action (like, subscribe, or comment).
 
         Example structure for {target_duration} seconds:
-        **Host:** [One punchy opening hook - 1 sentence]
-        **Host:** [One surprising fact or key point - 1-2 sentences]
-        {"**Host:** [One additional interesting detail - 1 sentence]" if target_duration >= 30 else ""}
-        **Host:** [Quick call to action - 1 sentence]
+        **Host:** [One punchy opening hook - 1 sentence, max 8-12 words]
+        **Host:** [One surprising fact or key point - 1-2 short sentences]
+        {"**Host:** [One curiosity twist or contradiction - 1 sentence]" if target_duration >= 30 else ""}
+        **Host:** [Quick payoff + call to action - 1 sentence]
 
         Keep it to {word_count_min}-{word_count_max} words total. Make every word count!
         

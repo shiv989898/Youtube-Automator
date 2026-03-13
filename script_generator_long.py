@@ -48,7 +48,7 @@ def _generate_with_retry(prompt: str) -> str:
     for key in shuffled:
         try:
             genai.configure(api_key=key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('models/gemma-3-12b-it')
             response = model.generate_content(prompt)
             if response and hasattr(response, 'text') and response.text:
                 print(f"Long-form script generated successfully by Gemini using key {_safe_key_label(key)}.")
@@ -87,16 +87,24 @@ def generate_long_script(topic):
         - Engaging and storytelling-driven
         - Professional and authoritative
         - Include interesting facts, examples, and explanations
+        - Optimized to retain viewers throughout the video
+
+        Retention rules:
+        - Open with a strong 1-sentence hook (no greeting, no slow setup)
+        - Add a mini open-loop every 2-3 sections (tease what is coming next)
+        - Keep sentences concise and avoid repetitive wording
+        - Include at least one surprising or counterintuitive point
+        - End with a clear payoff summary before CTA
         
         Structure for long-form content:
-        **Host:** [Hook - capture attention with an intriguing question or statement - 2-3 sentences]
-        **Host:** [Introduction - explain what the video will cover - 2-3 sentences]
+        **Host:** [Hook - attention-grabbing statement/question - 1-2 sentences]
+        **Host:** [Quick setup - what viewers will learn and why it matters - 2 sentences]
         **Host:** [Section 1 - First major point with detailed explanation and examples - 4-6 sentences]
         **Host:** [Section 2 - Second major point with supporting details - 4-6 sentences]
-        **Host:** [Section 3 - Third major point with interesting facts - 4-6 sentences]
+        **Host:** [Section 3 - Third major point with interesting facts + one curiosity tease - 4-6 sentences]
         {"**Host:** [Section 4 - Additional insights or deeper dive - 4-6 sentences]" if target_duration >= 300 else ""}
         {"**Host:** [Section 5 - Real-world applications or implications - 4-6 sentences]" if target_duration >= 360 else ""}
-        **Host:** [Conclusion - summarize key takeaways - 2-3 sentences]
+        **Host:** [Conclusion - high-value takeaway/payoff summary - 2-3 sentences]
         **Host:** [Call to action - encourage likes, comments, and subscriptions - 1-2 sentences]
 
         Keep the total word count between {word_count_min}-{word_count_max} words for a {target_duration // 60}-minute video.
