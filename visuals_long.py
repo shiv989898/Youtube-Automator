@@ -1,9 +1,56 @@
 import os
 import requests
 import random
+import re
 
 
-def get_visuals(topic, num_visuals: int = 8, target_duration: int = 180):
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "if", "then", "than", "this", "that", "these", "those",
+    "with", "from", "into", "about", "over", "under", "between", "during", "while", "where", "when",
+    "what", "why", "how", "who", "whom", "which", "your", "you", "are", "for", "to", "of", "in",
+    "on", "at", "by", "is", "was", "were", "be", "been", "being", "it", "its", "as", "we", "our",
+    "they", "their", "them", "he", "she", "his", "her", "will", "would", "can", "could", "should",
+    "today", "video", "long", "form", "host", "like", "comment", "subscribe", "watch"
+}
+
+
+def _build_context_queries(topic, script_text=None, max_queries=10):
+    """Build contextual search queries from topic + narration script."""
+    queries = []
+    base_topic = (topic or "").strip()
+    if base_topic:
+        queries.append(base_topic)
+
+    full_text = f"{base_topic}. {script_text or ''}".strip()
+    words = re.findall(r"[a-zA-Z]{4,}", full_text.lower())
+    freq = {}
+    for word in words:
+        if word in STOPWORDS:
+            continue
+        freq[word] = freq.get(word, 0) + 1
+
+    top_keywords = sorted(freq.items(), key=lambda item: item[1], reverse=True)[:12]
+    for keyword, _ in top_keywords:
+        candidate = f"{base_topic} {keyword}".strip()
+        if candidate and candidate not in queries:
+            queries.append(candidate)
+
+    sentences = [s.strip() for s in re.split(r"[.!?]+", script_text or "") if s.strip()]
+    for sentence in sentences[:8]:
+        sentence_words = [
+            w for w in re.findall(r"[a-zA-Z]{4,}", sentence.lower())
+            if w not in STOPWORDS
+        ]
+        if not sentence_words:
+            continue
+        snippet = " ".join(sentence_words[:6])
+        if snippet and snippet not in queries:
+            queries.append(snippet)
+
+    return queries[:max_queries] if queries else [base_topic or "nature"]
+
+
+def get_visuals(topic, num_visuals: int = 8, target_duration: int = 180, script_text=None):
     """Gather horizontal (16:9) 1080p-friendly visuals for long-form videos.
 
     Prefers landscape clips (width >= height) from Pexels/Pixabay and avoids
@@ -19,22 +66,31 @@ def get_visuals(topic, num_visuals: int = 8, target_duration: int = 180):
     if pexels_api_key:
         print("Trying Pexels (landscape) for visuals...")
         headers = {"Authorization": pexels_api_key}
-        params = {
-            "query": topic,
-            "per_page": num_visuals * 3,
-            "orientation": "landscape",  # key change vs shorts
-        }
+        context_queries = _build_context_queries(topic, script_text=script_text, max_queries=10)
+        print(f"Using context queries: {context_queries}")
         try:
-            response = requests.get(
-                "https://api.pexels.com/videos/search",
-                headers=headers,
-                params=params,
-                timeout=30,
-            )
-            response.raise_for_status()
-            pexels_data = response.json()
-
-            videos = pexels_data.get("videos", [])
+            videos = []
+            seen_ids = set()
+            for query in context_queries:
+                params = {
+                    "query": query,
+                    "per_page": max(15, num_visuals * 3),
+                    "orientation": "landscape",  # key change vs shorts
+                }
+                response = requests.get(
+                    "https://api.pexels.com/videos/search",
+                    headers=headers,
+                    params=params,
+                    timeout=30,
+                )
+                response.raise_for_status()
+                pexels_data = response.json()
+                for video in pexels_data.get("videos", []):
+                    video_id = video.get("id")
+                    if video_id in seen_ids:
+                        continue
+                    seen_ids.add(video_id)
+                    videos.append(video)
             random.shuffle(videos)
 
             for video in videos:

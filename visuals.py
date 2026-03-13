@@ -1,8 +1,55 @@
 import os
 import requests
 import random
+import re
 
-def get_visuals(topic, num_visuals=5, target_duration=20):
+
+STOPWORDS = {
+    "the", "a", "an", "and", "or", "but", "if", "then", "than", "this", "that", "these", "those",
+    "with", "from", "into", "about", "over", "under", "between", "during", "while", "where", "when",
+    "what", "why", "how", "who", "whom", "which", "your", "you", "are", "for", "to", "of", "in",
+    "on", "at", "by", "is", "was", "were", "be", "been", "being", "it", "its", "as", "we", "our",
+    "they", "their", "them", "he", "she", "his", "her", "will", "would", "can", "could", "should",
+    "today", "video", "short", "shorts", "host", "like", "comment", "subscribe", "watch"
+}
+
+
+def _build_context_queries(topic, script_text=None, max_queries=6):
+    """Build Pexels queries from topic + script context to improve semantic match."""
+    queries = []
+    base_topic = (topic or "").strip()
+    if base_topic:
+        queries.append(base_topic)
+
+    full_text = f"{base_topic}. {script_text or ''}".strip()
+    words = re.findall(r"[a-zA-Z]{4,}", full_text.lower())
+    freq = {}
+    for word in words:
+        if word in STOPWORDS:
+            continue
+        freq[word] = freq.get(word, 0) + 1
+
+    top_keywords = sorted(freq.items(), key=lambda item: item[1], reverse=True)[:8]
+    for keyword, _ in top_keywords:
+        candidate = f"{base_topic} {keyword}".strip()
+        if candidate and candidate not in queries:
+            queries.append(candidate)
+
+    sentences = [s.strip() for s in re.split(r"[.!?]+", script_text or "") if s.strip()]
+    for sentence in sentences[:6]:
+        sentence_words = [
+            w for w in re.findall(r"[a-zA-Z]{4,}", sentence.lower())
+            if w not in STOPWORDS
+        ]
+        if not sentence_words:
+            continue
+        snippet = " ".join(sentence_words[:5])
+        if snippet and snippet not in queries:
+            queries.append(snippet)
+
+    return queries[:max_queries] if queries else [base_topic or "nature"]
+
+def get_visuals(topic, num_visuals=5, target_duration=20, script_text=None):
     """
     Gathers visuals for the video. It tries Pexels first, then falls back to Pixabay.
     Optimized to download only videos matching the target duration to save time.
@@ -15,17 +62,26 @@ def get_visuals(topic, num_visuals=5, target_duration=20):
     if pexels_api_key:
         print("Trying Pexels for visuals...")
         headers = {"Authorization": pexels_api_key}
-        params = {
-            "query": topic, 
-            "per_page": num_visuals * 2, # Fetch more to filter down
-            "orientation": "portrait"
-        }
+        context_queries = _build_context_queries(topic, script_text=script_text, max_queries=6)
+        print(f"Using context queries: {context_queries}")
         try:
-            response = requests.get("https://api.pexels.com/videos/search", headers=headers, params=params)
-            response.raise_for_status()
-            pexels_data = response.json()
-            
-            videos = pexels_data.get("videos", [])
+            videos = []
+            seen_ids = set()
+            for query in context_queries:
+                params = {
+                    "query": query,
+                    "per_page": max(15, num_visuals * 2),
+                    "orientation": "portrait"
+                }
+                response = requests.get("https://api.pexels.com/videos/search", headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                pexels_data = response.json()
+                for video in pexels_data.get("videos", []):
+                    video_id = video.get("id")
+                    if video_id in seen_ids:
+                        continue
+                    seen_ids.add(video_id)
+                    videos.append(video)
             random.shuffle(videos) # Randomize results to get variety
 
             for video in videos:

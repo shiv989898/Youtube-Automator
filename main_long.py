@@ -101,7 +101,12 @@ def main():
     print(f"[STEP 5/{total_steps}] 🎥 Gathering horizontal visuals for long-form video...")
     print("Progress: [██████████] 56%")
     # Pass target duration to avoid downloading unnecessarily long videos
-    visual_files = visuals_long.get_visuals(topic, 12, target_duration=voiceover_duration)
+    visual_files = visuals_long.get_visuals(
+        topic,
+        12,
+        target_duration=voiceover_duration,
+        script_text=cleaned_script,
+    )
     print(f"✅ Found {len(visual_files)} visuals\n")
 
     if not visual_files:

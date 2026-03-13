@@ -93,7 +93,12 @@ def main():
 
     print("Gathering visuals...")
     # Pass target duration to avoid downloading unnecessarily long videos
-    visual_files = visuals.get_visuals(topic, 5, target_duration=voiceover_duration)
+    visual_files = visuals.get_visuals(
+        topic,
+        5,
+        target_duration=voiceover_duration,
+        script_text=cleaned_script,
+    )
     print(f"Found {len(visual_files)} visuals.")
 
     if not visual_files:
