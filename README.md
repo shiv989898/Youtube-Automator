@@ -21,7 +21,7 @@ An automated YouTube Shorts and long-form video creation pipeline. The system fe
    ```
 2. **Configure API keys**
    - Place your `client_secret.json` for YouTube OAuth in the repo root.
-   - Populate any required environment variables in `.env` (see `EASY_DEPLOYMENT.md`).
+   - Copy `.env.example` to `.env` and populate your own environment variables (see `EASY_DEPLOYMENT.md`).
 3. **Run Shorts workflow**
    ```powershell
    .\run_shorts.bat
@@ -58,6 +58,14 @@ For cloud or CI options, see:
 - **Memory errors**: Shorts render at 720×1280 with vignette disabled; ensure plenty of disk space for temp files.
 - **Stuck during long-form creation**: MoviePy may appear idle while it loads all horizontal clips—allow a few minutes.
 - **YouTube auth prompts**: Delete `token.pickle` to force a fresh OAuth flow if uploads fail.
+
+## Open Source
+- License: see [LICENSE](LICENSE)
+- Contributing guide: see [CONTRIBUTING.md](CONTRIBUTING.md)
+- Code of conduct: see [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
+- Security policy: see [SECURITY.md](SECURITY.md)
+
+Please do not commit secrets, OAuth files, generated media, or local environment files.
 
 ## License / Usage
 This project automates content creation; ensure your usage complies with the terms of the APIs (Pexels, Google, Microsoft) and that you respect Creative Commons licenses for the bundled music list.
