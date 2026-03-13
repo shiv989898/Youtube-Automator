@@ -5,6 +5,9 @@ YouTube Automator is a Python workflow that can generate and upload both YouTube
 This README is written to help someone clone the repository on a new computer and run it successfully from scratch.
 
 ## Architecture Diagram
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/810a6b76-d31b-4775-b683-938df0c3f0e9" />
+
+
 
 ## What this project does
 
