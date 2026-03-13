@@ -6,12 +6,6 @@ This README is written to help someone clone the repository on a new computer an
 
 ## Architecture Diagram
 
-Add your architecture image at `docs/architecture-diagram.png` and keep this section as-is so it renders on GitHub:
-
-![YouTube Automator Architecture](docs/architecture-diagram.png)
-
-If your filename is different, update the path in the image link above.
-
 ## What this project does
 
 The pipeline supports two flows:
