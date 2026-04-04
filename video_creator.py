@@ -8,71 +8,96 @@ import caption_generator
 # Target 720x1280 output keeps Shorts-friendly 9:16 while lowering memory load
 TARGET_WIDTH = 720
 TARGET_HEIGHT = 1280
-TARGET_FPS = 24
+TARGET_FPS = 30  # Higher FPS for smoother motion (retention boost)
+
+# Dynamic effects for visual engagement
+VISUAL_EFFECTS = ['zoom_in', 'zoom_out', 'zoom_in_out', 'slow_zoom', 'pulse']
+
+
+def _apply_visual_effect(clip, effect, duration):
+    """Apply dynamic visual effect to clip for better engagement."""
+    if effect == 'zoom_in':
+        # Smooth zoom in (Ken Burns style)
+        return clip.resize(lambda t: 1 + 0.18 * (t / duration))
+    elif effect == 'zoom_out':
+        # Smooth zoom out
+        return clip.resize(lambda t: 1.18 - 0.18 * (t / duration))
+    elif effect == 'zoom_in_out':
+        # Zoom in then out (breathing effect)
+        def zoom_func(t):
+            progress = t / duration
+            if progress < 0.5:
+                return 1 + 0.12 * (progress * 2)
+            else:
+                return 1.12 - 0.12 * ((progress - 0.5) * 2)
+        return clip.resize(zoom_func)
+    elif effect == 'slow_zoom':
+        # Very subtle slow zoom (professional look)
+        return clip.resize(lambda t: 1 + 0.08 * (t / duration))
+    elif effect == 'pulse':
+        # Subtle pulse effect (attention-grabbing)
+        import math as m
+        def pulse_func(t):
+            return 1 + 0.03 * m.sin(t * m.pi * 2)
+        return clip.resize(pulse_func)
+    return clip
 
 def create_video(visual_files, voiceover_file, output_file, music_file=None, script_text=None):
     """
-    Combines visuals and audio into a final video. The duration of each visual
-    is dynamically calculated based on the voiceover length.
-    Optionally adds captions if script_text is provided.
+    Creates retention-optimized video with dynamic effects and pacing.
+    Features: faster cuts, varied effects, higher FPS for smooth motion.
     """
-    print("Creating video...")
+    print("🎬 Creating retention-optimized video...")
     clips = []
     
     try:
-        voiceover = AudioFileClip(voiceover_file).volumex(0.9)
+        voiceover = AudioFileClip(voiceover_file).volumex(0.92)
         total_duration = voiceover.duration
-        duration_per_visual = math.ceil(total_duration / len(visual_files)) if visual_files else 0
+        
+        # Shorter clip durations = faster cuts = better retention
+        # Max 3-4 seconds per visual keeps viewers engaged
+        max_visual_duration = 3.5
+        duration_per_visual = min(max_visual_duration, 
+                                  math.ceil(total_duration / len(visual_files))) if visual_files else 0
 
         if duration_per_visual == 0:
             print("No visuals or zero duration. Cannot create video.")
             return
+        
+        # Track which effects were used to ensure variety
+        used_effects = []
 
         for i, visual_file in enumerate(visual_files):
             clip = None
             try:
+                # Select effect ensuring variety
+                available_effects = [e for e in VISUAL_EFFECTS if e not in used_effects[-2:]]
+                if not available_effects:
+                    available_effects = VISUAL_EFFECTS
+                effect = random.choice(available_effects)
+                used_effects.append(effect)
+                
                 if visual_file.lower().endswith(('.mp4', '.mov')):
                     clip = VideoFileClip(visual_file)
                     # Loop shorter clips to fit the required duration
                     if clip.duration < duration_per_visual:
                         clip = clip.fx(vfx.loop, duration=duration_per_visual)
                     else:
-                        clip = clip.subclip(0, duration_per_visual)
+                        # Start from a random point for variety
+                        max_start = max(0, clip.duration - duration_per_visual)
+                        start_time = random.uniform(0, max_start) if max_start > 0 else 0
+                        clip = clip.subclip(start_time, start_time + duration_per_visual)
                     
-                    # Add random attractive effects to video clips
-                    effect = random.choice(['zoom_in', 'zoom_out', 'pan_left', 'pan_right'])
-                    if effect == 'zoom_in':
-                        clip = clip.resize(lambda t: 1 + 0.15 * (t / duration_per_visual))
-                    elif effect == 'zoom_out':
-                        clip = clip.resize(lambda t: 1.15 - 0.15 * (t / duration_per_visual))
+                    # Apply dynamic effect
+                    clip = _apply_visual_effect(clip, effect, duration_per_visual)
                 
                 elif visual_file.lower().endswith(('.jpg', '.png')):
-                    # Add variety of zoom and pan effects to static images
                     clip = ImageClip(visual_file).set_duration(duration_per_visual)
-                    
-                    # Randomly choose an effect for variety
-                    effect = random.choice(['zoom_in', 'zoom_out', 'zoom_in_out', 'pan_right', 'pan_left'])
-                    
-                    if effect == 'zoom_in':
-                        # Smooth zoom in (Ken Burns effect)
-                        clip = clip.resize(lambda t: 1 + 0.2 * (t / duration_per_visual))
-                    elif effect == 'zoom_out':
-                        # Smooth zoom out
-                        clip = clip.resize(lambda t: 1.2 - 0.2 * (t / duration_per_visual))
-                    elif effect == 'zoom_in_out':
-                        # Zoom in then out (more dynamic)
-                        def zoom_in_out(t):
-                            progress = t / duration_per_visual
-                            if progress < 0.5:
-                                return 1 + 0.15 * (progress * 2)
-                            else:
-                                return 1.15 - 0.15 * ((progress - 0.5) * 2)
-                        clip = clip.resize(zoom_in_out)
-                    
+                    clip = _apply_visual_effect(clip, effect, duration_per_visual)
                     clip = clip.set_position(('center', 'center'))
 
                 if clip:
-                    # Standardize clip size for YouTube Shorts (reduced resolution to save memory)
+                    # Standardize clip size for YouTube Shorts
                     clip = clip.resize(height=TARGET_HEIGHT)
                     if clip.w > TARGET_WIDTH:
                         clip = clip.fx(vfx.crop, width=TARGET_WIDTH, x_center=clip.w / 2)
@@ -81,11 +106,11 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                         clip = CompositeVideoClip([background, clip.set_position(('center', 'center'))], size=(TARGET_WIDTH, TARGET_HEIGHT))
                     clip = clip.set_position(('center', 'center')).set_duration(duration_per_visual)
                     
-                    # Shorter fades to reduce overlapping frames in memory
-                    if i > 0:  # Not the first clip
-                        clip = clip.crossfadein(0.2)
-                    if i < len(visual_files) - 1:  # Not the last clip
-                        clip = clip.crossfadeout(0.2)
+                    # Quick crossfades for snappy transitions
+                    if i > 0:
+                        clip = clip.crossfadein(0.15)
+                    if i < len(visual_files) - 1:
+                        clip = clip.crossfadeout(0.15)
                     
                     clips.append(clip)
 
@@ -117,7 +142,8 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         audio_clips = [voiceover]
         if music_file:
             try:
-                background_music = AudioFileClip(music_file).volumex(0.088) # Slightly louder music for energy
+                # Slightly louder background music for energy (but still below voice)
+                background_music = AudioFileClip(music_file).volumex(0.12)
                 # Loop or trim music to match the video duration
                 if background_music.duration < total_duration:
                     background_music = background_music.fx(vfx.loop, duration=total_duration)
@@ -125,7 +151,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                     background_music = background_music.subclip(0, total_duration)
                 
                 # Add fade in/out to music for professional sound
-                background_music = background_music.audio_fadein(1.0).audio_fadeout(1.0)
+                background_music = background_music.audio_fadein(0.8).audio_fadeout(0.8)
                 audio_clips.append(background_music)
             except Exception as e:
                 print(f"Warning: Could not process background music: {e}")
@@ -145,7 +171,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                                   threads=8,  # Use more CPU threads
                                   logger='bar')  # Progress bar keeps terminal responsive
         
-        print(f"✨ Video created successfully with professional effects: {output_file}")
+        print(f"✨ Retention-optimized video created: {output_file}")
 
     except Exception as e:
         print(f"An error occurred during video creation: {e}")

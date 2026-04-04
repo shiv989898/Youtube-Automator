@@ -66,8 +66,8 @@ def _generate_with_retry(prompt: str) -> str:
 
 def generate_script(topic):
     """
-    Generates a script for a YouTube Short using the Google Gemini API.
-    Script length varies between 20-40 seconds for variety.
+    Generates a viral-optimized script for YouTube Shorts.
+    Engineered for maximum retention with proven hook formulas.
     """
     try:
         # Randomly choose script length for variety
@@ -75,40 +75,57 @@ def generate_script(topic):
         word_count_min = int(target_duration * 2.2)  # ~2.2 words per second
         word_count_max = int(target_duration * 2.8)  # ~2.8 words per second
         
+        # Proven hook formulas that boost retention
+        hook_styles = [
+            "a shocking statistic or fact",
+            "a controversial statement that challenges common belief",
+            "a 'what if' scenario that sparks curiosity",
+            "a bold claim followed by proof",
+            "a relatable problem the viewer faces",
+        ]
+        selected_hook = random.choice(hook_styles)
+        
         prompt = f"""
-        Create a script for a {target_duration}-second YouTube Short about the topic: "{topic}".
+        Create a {target_duration}-second YouTube Short script about: "{topic}"
 
-        IMPORTANT: Keep it to {target_duration} seconds when spoken aloud (approximately {word_count_min}-{word_count_max} words total).
+        CRITICAL RETENTION RULES (YouTube algorithm favors these):
         
-        The script should be:
-        - Engaging and fast-paced
-        - Easy to understand
-        - Punchy and concise
-        - Exciting and curious in tone
-        - Optimized for audience retention from second 0
+        1. HOOK (First 3 seconds - MOST IMPORTANT):
+           - Use this hook style: {selected_hook}
+           - NO greetings, NO "today we'll talk about"
+           - First words must create instant curiosity or shock
+           - Pattern interrupt: Start mid-thought or with a question
+           
+        2. LOOP STRUCTURE (Keeps viewers watching):
+           - Tease something coming ("but wait, it gets crazier")
+           - Use open loops: hint at info, deliver later
+           - Each sentence should make them want the next
+           
+        3. PACING (Prevents drop-off):
+           - Short punchy sentences (5-10 words max)
+           - Vary sentence rhythm: short, short, medium, short
+           - Add verbal "speed bumps": "Here's the thing...", "But get this..."
+           
+        4. PAYOFF + CTA (Last 3 seconds):
+           - Deliver on the hook's promise
+           - End with curiosity for more: "Follow for part 2" or "Comment your guess"
+           - Never end flat - end on emotion or question
 
-        Retention rules:
-        - First line must be a strong hook (no greeting, no intro fluff)
-        - Keep sentence length short and high-energy
-        - Introduce one curiosity twist in the middle ("but here's the catch" style)
-        - End with a quick payoff plus CTA
-        - Avoid generic filler like "today we're talking about"
-        
-        Structure it with clear "Host:" cues for the voiceover.
-        End with a quick call to action (like, subscribe, or comment).
+        TONE: Conversational, like telling a friend something wild you just learned.
+        Use contractions (don't, can't, it's) to sound natural.
 
-        Example structure for {target_duration} seconds:
-        **Host:** [One punchy opening hook - 1 sentence, max 8-12 words]
-        **Host:** [One surprising fact or key point - 1-2 short sentences]
-        {"**Host:** [One curiosity twist or contradiction - 1 sentence]" if target_duration >= 30 else ""}
-        **Host:** [Quick payoff + call to action - 1 sentence]
+        FORMAT:
+        **Host:** [Hook - ONE powerful sentence, 8-12 words]
+        **Host:** [Setup - build intrigue, 1-2 sentences]
+        **Host:** [Twist/reveal - the "but here's the thing" moment]
+        **Host:** [Payoff + CTA - deliver value, ask for engagement]
 
-        Keep it to {word_count_min}-{word_count_max} words total. Make every word count!
+        Word count: {word_count_min}-{word_count_max} words total.
         
-        DO NOT include any meta information like "Word Count:", "Estimated Speaking Time:", or similar notes.
-        ONLY provide the actual script content with Host: markers.
-        
-        Now, generate a {target_duration}-second script for: "{topic}".
+        DO NOT include meta notes like "Word Count:" or "Speaking Time:".
+        ONLY output the script with Host: markers.
+
+        Generate the script now for: "{topic}"
         """
         
         response_text = _generate_with_retry(prompt)
@@ -116,9 +133,8 @@ def generate_script(topic):
             return response_text
         
         print("Gemini API returned empty responses across all keys. Using fallback template.")
-        return f"**Host:** Let's talk about {topic}! It's a huge subject, so here's a quick look. First, the basics. Then, a surprising fact. And finally, what the future holds. Thanks for watching!"
+        return f"**Host:** You won't believe what happens with {topic}! Most people get this completely wrong. Here's what they miss. The truth? It's way more interesting than you think. Drop a comment if you knew this!"
 
     except Exception as e:
         print(f"Error generating script with Gemini: {e}")
-        # Fallback to a simple template if the API fails
-        return f"**Host:** Welcome back! Today we're exploring {topic}. It's more fascinating than you can imagine. From its origins to its future, there's so much to uncover. Join us for the journey and don't forget to subscribe!"
+        return f"**Host:** Stop scrolling - {topic} is about to blow your mind! Everyone talks about it, but nobody mentions this part. Here's the secret most people miss. Follow for more wild facts like this!"
