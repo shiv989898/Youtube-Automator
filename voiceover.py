@@ -36,9 +36,7 @@ VOICE_STYLES = {
     "en-GB-SoniaNeural": "cheerful",      # Friendly British
 }
 
-git add voiceover.py
-git commit -m "Fix voiceover reading URLs and technical junk - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
-git push
+
 async def _generate_edge_tts(text, filename, voice_name, use_ssml=True):
     """
     Generate voiceover using edge-tts with natural prosody.
