@@ -36,112 +36,71 @@ VOICE_STYLES = {
     "en-GB-SoniaNeural": "cheerful",      # Friendly British
 }
 
-
-def _add_ssml_prosody(text, voice_name):
-    """
-    Add SSML markup to make speech more natural and human-like.
-    Adds pauses, emphasis, and varied pacing for better retention.
-    """
-    # Get voice style if available
-    style = VOICE_STYLES.get(voice_name, "")
-    
-    # Add natural pauses after punctuation
-    text = re.sub(r'([.!?])\s+', r'\1<break time="400ms"/> ', text)
-    text = re.sub(r'([,;:])\s+', r'\1<break time="200ms"/> ', text)
-    
-    # Add emphasis to key retention phrases (hooks)
-    hook_phrases = [
-        r"(but here's (?:the|what's))",
-        r"(the (?:crazy|wild|shocking|surprising) (?:thing|part|fact))",
-        r"(you won't believe)",
-        r"(here's why)",
-        r"(the secret is)",
-        r"(what if I told you)",
-        r"(most people don't know)",
-        r"(this is (?:crazy|wild|insane))",
-    ]
-    for pattern in hook_phrases:
-        text = re.sub(pattern, r'<emphasis level="strong">\1</emphasis>', text, flags=re.IGNORECASE)
-    
-    # Add slight rate variation for more natural delivery
-    # Start slightly faster (hook), slow down for key info
-    sentences = text.split('<break time="400ms"/>')
-    processed = []
-    for i, sentence in enumerate(sentences):
-        if i == 0:
-            # First sentence: slightly faster for hook energy
-            sentence = f'<prosody rate="+8%">{sentence}</prosody>'
-        elif i == len(sentences) - 1:
-            # Last sentence: slow down for CTA impact
-            sentence = f'<prosody rate="-5%" pitch="+5%">{sentence}</prosody>'
-        else:
-            # Middle: natural variation
-            rate_var = random.choice(["+3%", "+0%", "-3%"])
-            sentence = f'<prosody rate="{rate_var}">{sentence}</prosody>'
-        processed.append(sentence)
-    
-    text = '<break time="400ms"/>'.join(processed)
-    
-    # Wrap in SSML with voice style if supported
-    if style:
-        ssml = f'''<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" 
-                   xmlns:mstts="https://www.w3.org/2001/mstts" xml:lang="en-US">
-            <voice name="{voice_name}">
-                <mstts:express-as style="{style}" styledegree="1.2">
-                    <prosody pitch="+2%">
-                        {text}
-                    </prosody>
-                </mstts:express-as>
-            </voice>
-        </speak>'''
-    else:
-        ssml = f'''<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">
-            <voice name="{voice_name}">
-                <prosody pitch="+2%">
-                    {text}
-                </prosody>
-            </voice>
-        </speak>'''
-    
-    return ssml
-
-
+git add voiceover.py
+git commit -m "Fix voiceover reading URLs and technical junk - Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>"
+git push
 async def _generate_edge_tts(text, filename, voice_name, use_ssml=True):
     """
     Generate voiceover using edge-tts with natural prosody.
-    Uses SSML for human-like speech patterns and emotional delivery.
+    Uses simple rate/pitch adjustments (edge-tts doesn't support full SSML).
     """
     try:
-        if use_ssml:
-            # Use SSML for more natural, human-like speech
-            ssml_text = _add_ssml_prosody(text, voice_name)
-            # Edge-tts with rate adjustment for energy
-            communicate = Communicate(ssml_text, voice_name, rate="+5%", pitch="+2Hz")
-        else:
-            # Fallback to plain text with slight speed boost for energy
-            communicate = Communicate(text, voice_name, rate="+5%", pitch="+2Hz")
-        
+        # Edge-tts uses simple parameters, not full SSML
+        # Slight speed boost and pitch adjustment for energy
+        communicate = Communicate(text, voice_name, rate="+5%", pitch="+2Hz")
         await communicate.save(filename)
     except Exception as e:
-        # If SSML fails, try without it
-        if use_ssml:
-            communicate = Communicate(text, voice_name, rate="+5%", pitch="+2Hz")
-            await communicate.save(filename)
-        else:
-            raise Exception(f"Edge TTS error: {str(e)}")
+        raise Exception(f"Edge TTS error: {str(e)}")
 
 def _preprocess_script_for_speech(text):
     """
     Preprocess script to make it more natural when spoken.
-    Converts written text to speech-friendly format.
+    Removes URLs, technical junk, and converts to speech-friendly format.
     """
-    # Remove Host: markers
+    # Remove Host: markers and stage directions
     text = re.sub(r'\*?\*?Host:\*?\*?\s*', '', text, flags=re.IGNORECASE)
-    text = re.sub(r'\[.*?\]', '', text)  # Remove stage directions
+    text = re.sub(r'\[.*?\]', '', text)  # Remove stage directions like [pause]
+    
+    # Remove URLs completely (https://, http://, www.)
+    text = re.sub(r'https?://[^\s]+', '', text)
+    text = re.sub(r'www\.[^\s]+', '', text)
+    text = re.sub(r'[a-zA-Z0-9.-]+\.(com|org|net|io|co|edu|gov)[^\s]*', '', text)
+    
+    # Remove any XML/SSML tags that might have leaked through
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'xmlns[^\s"]*', '', text)
+    
+    # Remove markdown formatting
+    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # **bold** -> bold
+    text = re.sub(r'\*([^*]+)\*', r'\1', text)      # *italic* -> italic
+    text = re.sub(r'__([^_]+)__', r'\1', text)      # __underline__
+    text = re.sub(r'`([^`]+)`', r'\1', text)        # `code`
+    text = re.sub(r'#{1,6}\s*', '', text)           # # headers
+    
+    # Remove special characters that sound weird when spoken
+    text = re.sub(r'[<>{}|\\^~`]', '', text)
+    text = re.sub(r'\s*[-–—]\s*', ', ', text)       # dashes to commas
+    text = re.sub(r'\s*/\s*', ' or ', text)         # slash to "or"
+    text = re.sub(r'&amp;', 'and', text)
+    text = re.sub(r'&', ' and ', text)
+    
+    # Remove hashtags and mentions
+    text = re.sub(r'#\w+', '', text)
+    text = re.sub(r'@\w+', '', text)
+    
+    # Remove emoji (unicode ranges for common emoji)
+    text = re.sub(r'[\U0001F600-\U0001F64F]', '', text)  # emoticons
+    text = re.sub(r'[\U0001F300-\U0001F5FF]', '', text)  # symbols & pictographs
+    text = re.sub(r'[\U0001F680-\U0001F6FF]', '', text)  # transport & map
+    text = re.sub(r'[\U0001F1E0-\U0001F1FF]', '', text)  # flags
+    text = re.sub(r'[\U00002702-\U000027B0]', '', text)  # dingbats
     
     # Convert numbers to be more speakable
     text = re.sub(r'\b(\d+)%', r'\1 percent', text)
     text = re.sub(r'\$(\d+)', r'\1 dollars', text)
+    text = re.sub(r'(\d+)k\b', r'\1 thousand', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)m\b', r'\1 million', text, flags=re.IGNORECASE)
+    text = re.sub(r'(\d+)b\b', r'\1 billion', text, flags=re.IGNORECASE)
     
     # Add natural contractions (sounds more human)
     replacements = {
@@ -198,7 +157,7 @@ def generate_voiceover(filename, text):
     
     print(f"Attempting to generate voiceover with {len(available_voices)} voices...")
     
-    # Try edge-tts first (best quality) with SSML for natural speech
+    # Try edge-tts first (best quality)
     for i, voice in enumerate(available_voices):
         try:
             progress = int(((i + 1) / len(available_voices)) * 100)
@@ -207,7 +166,7 @@ def generate_voiceover(filename, text):
             bar = "█" * filled + "░" * (bar_length - filled)
             style = VOICE_STYLES.get(voice, "natural")
             print(f"\r  Voice [{bar}] {progress}% - {voice} ({style})", end="", flush=True)
-            asyncio.run(_generate_edge_tts(processed_text, filename, voice, use_ssml=True))
+            asyncio.run(_generate_edge_tts(processed_text, filename, voice))
             
             # Verify file
             if os.path.exists(filename) and os.path.getsize(filename) > 5000:
