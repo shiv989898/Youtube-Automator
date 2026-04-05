@@ -10,6 +10,7 @@ import subtitle_generator_long
 import youtube_uploader_long
 import music_finder
 import re
+import math
 
 def setup_credentials():
     """Decode credentials from environment variables for Render.com deployment."""
@@ -90,6 +91,14 @@ def main():
     audio_clip.close()
     print(f"⏱️  Voiceover duration: {voiceover_duration}s ({voiceover_duration//60}m {voiceover_duration%60}s)\n")
 
+    # Match visual count to narration length so long-form videos stay visually active.
+    target_seconds_per_visual = 10
+    min_visuals = 12
+    max_visuals = 36
+    visual_count = max(min_visuals, math.ceil(voiceover_duration / target_seconds_per_visual))
+    visual_count = min(max_visuals, visual_count)
+    print(f"🎞️  Target visual count: {visual_count} (~{target_seconds_per_visual}s each)\n")
+
     print(f"[STEP 4/{total_steps}] 🎵 Finding background music...")
     print("Progress: [████████░░] 44%")
     music_file = music_finder.find_and_download_music("cinematic")
@@ -103,7 +112,7 @@ def main():
     # Pass target duration to avoid downloading unnecessarily long videos
     visual_files = visuals_long.get_visuals(
         topic,
-        12,
+        visual_count,
         target_duration=voiceover_duration,
         script_text=cleaned_script,
     )

@@ -1,5 +1,5 @@
 from moviepy.editor import (VideoFileClip, AudioFileClip, CompositeAudioClip, 
-                            ImageClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
+                            ImageClip, concatenate_videoclips, CompositeVideoClip)
 from moviepy.video.fx import all as vfx
 from moviepy.video.fx.all import crop
 import math
@@ -105,12 +105,20 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
         bar = "█" * 20
         print(f"\r⏳ Processing clips: [{bar}] 100% ({len(clips)}/{total_clips})")
         print(f"✅ Processed {len(clips)} clips successfully!")
+        assembled_duration = sum((c.duration or 0) for c in clips)
+        print(f"📏 Visual coverage before alignment: {assembled_duration:.2f}s vs audio {total_duration:.2f}s")
         print("\n⏳ Concatenating clips (0%)...", end="", flush=True)
         # Simple concatenation for maximum stability; all clips are TARGET_W x TARGET_H
         final_clip = concatenate_videoclips(clips, method="chain")
         print("\r⏳ Concatenating clips (100%)...")
         print("✅ Clips concatenated!")
-        final_clip = final_clip.set_duration(total_duration)  # Ensure total duration matches voiceover
+        # Ensure visual timeline fully covers voiceover to prevent black frames.
+        if final_clip.duration < total_duration:
+            print(f"🔁 Extending visuals by looping timeline from {final_clip.duration:.2f}s to {total_duration:.2f}s")
+            final_clip = final_clip.fx(vfx.loop, duration=total_duration)
+        else:
+            print(f"✂️  Trimming visuals from {final_clip.duration:.2f}s to {total_duration:.2f}s")
+            final_clip = final_clip.subclip(0, total_duration)
 
         # Force final clip size to target dimensions as a safety net
         try:

@@ -9,6 +9,7 @@ import video_creator
 import youtube_uploader
 import music_finder
 import re
+import math
 
 def setup_credentials():
     """Decode credentials from environment variables for Render.com deployment."""
@@ -84,6 +85,14 @@ def main():
     audio_clip.close()
     print(f"Voiceover duration: {voiceover_duration}s")
 
+    # Adapt visual count to narration length for smoother pacing and less looping.
+    target_seconds_per_visual = 3
+    min_visuals = 6
+    max_visuals = 16
+    visual_count = max(min_visuals, math.ceil(voiceover_duration / target_seconds_per_visual))
+    visual_count = min(max_visuals, visual_count)
+    print(f"Target visual count: {visual_count} (~{target_seconds_per_visual}s per cut)")
+
     print("Finding background music...")
     music_file = music_finder.find_and_download_music("upbeat")
     if music_file:
@@ -95,7 +104,7 @@ def main():
     # Pass target duration to avoid downloading unnecessarily long videos
     visual_files = visuals.get_visuals(
         topic,
-        5,
+        visual_count,
         target_duration=voiceover_duration,
         script_text=cleaned_script,
     )

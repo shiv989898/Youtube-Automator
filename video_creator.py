@@ -1,5 +1,5 @@
 from moviepy.editor import (VideoFileClip, AudioFileClip, CompositeAudioClip, 
-                            ImageClip, concatenate_videoclips, ColorClip, CompositeVideoClip)
+                            ImageClip, concatenate_videoclips, CompositeVideoClip)
 from moviepy.video.fx import all as vfx
 import math
 import random
@@ -102,8 +102,19 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                     if clip.w > TARGET_WIDTH:
                         clip = clip.fx(vfx.crop, width=TARGET_WIDTH, x_center=clip.w / 2)
                     elif clip.w < TARGET_WIDTH:
-                        background = ColorClip(size=(TARGET_WIDTH, TARGET_HEIGHT), color=(0, 0, 0)).set_duration(clip.duration)
-                        clip = CompositeVideoClip([background, clip.set_position(('center', 'center'))], size=(TARGET_WIDTH, TARGET_HEIGHT))
+                        # Fill side space with a dimmed backdrop from the same clip (instead of black bars).
+                        backdrop = clip.resize(width=TARGET_WIDTH)
+                        if backdrop.h < TARGET_HEIGHT:
+                            backdrop = backdrop.resize(height=TARGET_HEIGHT)
+                        if backdrop.w > TARGET_WIDTH:
+                            backdrop = backdrop.fx(vfx.crop, width=TARGET_WIDTH, x_center=backdrop.w / 2)
+                        if backdrop.h > TARGET_HEIGHT:
+                            backdrop = backdrop.fx(vfx.crop, height=TARGET_HEIGHT, y_center=backdrop.h / 2)
+                        backdrop = backdrop.fx(vfx.colorx, 0.42)
+                        clip = CompositeVideoClip(
+                            [backdrop.set_position(('center', 'center')), clip.set_position(('center', 'center'))],
+                            size=(TARGET_WIDTH, TARGET_HEIGHT)
+                        )
                     clip = clip.set_position(('center', 'center')).set_duration(duration_per_visual)
                     
                     # Quick crossfades for snappy transitions
@@ -122,10 +133,19 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
             return
 
         # Concatenate with crossfade method for smooth transitions
+        assembled_duration = sum((c.duration or 0) for c in clips)
+        print(f"Visual coverage before alignment: {assembled_duration:.2f}s vs audio {total_duration:.2f}s")
+
         final_clip = concatenate_videoclips(clips, method="compose")
         final_clip = final_clip.resize((TARGET_WIDTH, TARGET_HEIGHT))
         final_clip = final_clip.set_fps(TARGET_FPS)
-        final_clip = final_clip.set_duration(total_duration)  # Ensure total duration matches voiceover
+        # Ensure visual timeline fully covers the voiceover to avoid black-screen tails.
+        if final_clip.duration < total_duration:
+            print(f"Extending visuals by looping timeline from {final_clip.duration:.2f}s to {total_duration:.2f}s")
+            final_clip = final_clip.fx(vfx.loop, duration=total_duration)
+        else:
+            print(f"Trimming visuals from {final_clip.duration:.2f}s to {total_duration:.2f}s")
+            final_clip = final_clip.subclip(0, total_duration)
         
         # Skip vignette effect to reduce memory usage on high-resolution sources
         print("Note: Vignette effect disabled for stability")
