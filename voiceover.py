@@ -53,7 +53,7 @@ async def _generate_edge_tts(text, filename, voice_name, use_ssml=True):
 def _preprocess_script_for_speech(text):
     """
     Preprocess script to make it more natural when spoken.
-    Removes URLs, technical junk, and converts to speech-friendly format.
+    Removes URLs, technical junk, filler words, and converts to speech-friendly format.
     """
     # Remove Host: markers and stage directions
     text = re.sub(r'\*?\*?Host:\*?\*?\s*', '', text, flags=re.IGNORECASE)
@@ -93,6 +93,76 @@ def _preprocess_script_for_speech(text):
     text = re.sub(r'[\U0001F1E0-\U0001F1FF]', '', text)  # flags
     text = re.sub(r'[\U00002702-\U000027B0]', '', text)  # dingbats
     
+    # Remove AI-generated filler phrases and meta content
+    filler_patterns = [
+        # Intro fillers
+        r"\b(hey |hi |hello |hey there |hi there |hello there )",
+        r"\bwelcome back[,!.]?\s*",
+        r"\bthanks for (watching|tuning in|being here)[,!.]?\s*",
+        r"\btoday we('re| are) (going to |gonna )?(talk about |discuss |explore |look at |cover )",
+        r"\bin this video[,]?\s*(we('ll| will)|I('ll| will))?\s*",
+        r"\blet me (tell you|show you|explain)\s*",
+        r"\bso[,]?\s+basically[,]?\s*",
+        r"\bbasically[,]?\s*",
+        r"\b(so |well |now |okay |alright |right )[,]?\s*(?=\w)",
+        
+        # Meta content / stage directions
+        r"\(.*?\)",  # anything in parentheses
+        r"word count[:\s]*\d+\s*",
+        r"estimated (speaking |reading )?time[:\s]*[\d\w\s]+",
+        r"duration[:\s]*[\d\w\s]+",
+        r"script (length|duration)[:\s]*[\d\w\s]+",
+        r"approximately \d+ (words|seconds)",
+        r"note[:\s].*?[.!?]",
+        
+        # Outro fillers
+        r"\bthat's (all for today|it for today|a wrap)[,!.]?\s*",
+        r"\buntil next time[,!.]?\s*",
+        r"\bsee you (in the next (one|video)|soon|later)[,!.]?\s*",
+        r"\bpeace out[,!.]?\s*",
+        r"\bbye[,!.]?\s*$",
+        r"\btake care[,!.]?\s*$",
+        
+        # Generic fillers
+        r"\byou know[,]?\s*",
+        r"\blike[,]?\s+(?=\w)",
+        r"\bum+[,]?\s*",
+        r"\buh+[,]?\s*",
+        r"\bactually[,]?\s*",
+        r"\bliterally[,]?\s*",
+        r"\bhonestly[,]?\s*",
+        r"\bseriously[,]?\s*",
+        r"\bobviously[,]?\s*",
+        r"\bclearly[,]?\s*",
+        r"\bof course[,]?\s*",
+        r"\bas you (know|can see)[,]?\s*",
+        r"\bin fact[,]?\s*",
+        r"\bto be honest[,]?\s*",
+        r"\bI mean[,]?\s*",
+        r"\bkind of[,]?\s*",
+        r"\bsort of[,]?\s*",
+        r"\bmore or less[,]?\s*",
+        r"\bpretty much[,]?\s*",
+        r"\bat the end of the day[,]?\s*",
+        r"\blong story short[,]?\s*",
+        r"\banyway[s]?[,]?\s*",
+        r"\bmoving on[,]?\s*",
+        r"\bwith that (said|being said)[,]?\s*",
+        r"\bhaving said that[,]?\s*",
+        
+        # Redundant YouTube phrases
+        r"\b(smash |hit )?(that )?(like |subscribe )button[,!.]?\s*",
+        r"\bdon't forget to (like|subscribe|comment|share)[,!.]?\s*",
+        r"\bmake sure (to |you )(like|subscribe|comment|share)[,!.]?\s*",
+        r"\bleave a (like|comment) (below|down below)[,!.]?\s*",
+        r"\bturn on (the )?notifications[,!.]?\s*",
+        r"\bbell icon[,!.]?\s*",
+        r"\bwithout further ado[,]?\s*",
+    ]
+    
+    for pattern in filler_patterns:
+        text = re.sub(pattern, '', text, flags=re.IGNORECASE)
+    
     # Convert numbers to be more speakable
     text = re.sub(r'\b(\d+)%', r'\1 percent', text)
     text = re.sub(r'\$(\d+)', r'\1 dollars', text)
@@ -128,8 +198,12 @@ def _preprocess_script_for_speech(text):
     for formal, casual in replacements.items():
         text = re.sub(rf'\b{formal}\b', casual, text, flags=re.IGNORECASE)
     
-    # Clean up extra whitespace
-    text = ' '.join(text.split())
+    # Clean up extra whitespace and punctuation
+    text = re.sub(r'\s+', ' ', text)           # multiple spaces to single
+    text = re.sub(r'\s+([.,!?])', r'\1', text) # remove space before punctuation
+    text = re.sub(r'([.,!?])\1+', r'\1', text) # remove duplicate punctuation
+    text = re.sub(r'^[,.\s]+', '', text)       # remove leading punctuation
+    text = text.strip()
     
     return text
 
