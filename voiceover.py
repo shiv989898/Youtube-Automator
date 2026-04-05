@@ -158,6 +158,18 @@ def _preprocess_script_for_speech(text):
         r"\bturn on (the )?notifications[,!.]?\s*",
         r"\bbell icon[,!.]?\s*",
         r"\bwithout further ado[,]?\s*",
+        
+        # Part 2/follow-up teases
+        r"\bfollow for part \d+[,!.]?\s*",
+        r"\bpart \d+ (coming soon|is coming|drops soon)[,!.]?\s*",
+        r"\bstay tuned for part \d+[,!.]?\s*",
+        r"\bcheck out part \d+[,!.]?\s*",
+        r"\bwatch part \d+[,!.]?\s*",
+        r"\bmore (in|on) part \d+[,!.]?\s*",
+        r"\bcontinued in part \d+[,!.]?\s*",
+        r"\bto be continued[,!.]?\s*",
+        r"\bfollow for more[,!.]?\s*",
+        r"\bmore (coming soon|to come)[,!.]?\s*",
     ]
     
     for pattern in filler_patterns:
