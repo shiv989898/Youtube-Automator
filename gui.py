@@ -43,6 +43,9 @@ class AppInterface(tk.Tk):
         ttk.Label(control_frame, text="Long Video Automation", style='Header.TLabel').pack(pady=(0, 10))
         self.btn_long = ttk.Button(control_frame, text="▶ Generate Long Video", command=lambda: self.run_script("main_long.py"))
         self.btn_long.pack(fill="x", pady=5)
+        
+        self.btn_loop_long = ttk.Button(control_frame, text="🔁 Run Long Loop", command=lambda: self.run_script("run_long_loop.bat"))
+        self.btn_loop_long.pack(fill="x", pady=5)
 
         ttk.Separator(control_frame, orient='horizontal').pack(fill='x', pady=15)
         
@@ -82,7 +85,11 @@ class AppInterface(tk.Tk):
     def _execute_command(self, target):
         try:
             if target.endswith(".py"):
-                cmd = [sys.executable, target]
+                # Always use the virtual environment's python.exe
+                python_path = os.path.join(".venv", "Scripts", "python.exe")
+                if not os.path.exists(python_path):
+                    python_path = "python" # fallback to system python
+                cmd = [python_path, target]
             else:
                 cmd = [target]
                 
@@ -111,6 +118,7 @@ class AppInterface(tk.Tk):
         self.btn_short.config(state=state)
         self.btn_loop_short.config(state=state)
         self.btn_long.config(state=state)
+        self.btn_loop_long.config(state=state)
 
 """
 To run this application, type the following command in your terminal:
