@@ -48,7 +48,7 @@ def _generate_with_retry(prompt: str) -> str:
     for key in shuffled:
         try:
             genai.configure(api_key=key)
-            model = genai.GenerativeModel('gemini-1.5-pro')
+            model = genai.GenerativeModel('gemini-2.0-flash-lite')
             response = model.generate_content(prompt)
             if response and hasattr(response, 'text') and response.text:
                 print(f"Long-form script generated successfully by Gemini using key {_safe_key_label(key)}.")
