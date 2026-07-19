@@ -3,54 +3,85 @@ import random
 import requests
 
 
-ROYALTY_FREE_TRACKS = [
-    # Kevin MacLeod classics
-    ("Sneaky Snitch", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3"),
-    ("Carefree", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Carefree.mp3"),
-    ("Happy Boy End Theme", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Happy%20Boy%20End%20Theme.mp3"),
-    ("Monkeys Spinning Monkeys", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Monkeys%20Spinning%20Monkeys.mp3"),
-    ("Wallpaper", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Wallpaper.mp3"),
-    ("Cipher", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cipher.mp3"),
-    ("Darkest Child", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Darkest%20Child.mp3"),
-    ("Future Gladiator", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Future%20Gladiator.mp3"),
-    ("Pamgaea", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Pamgaea.mp3"),
-    ("Sugar Plum Dark", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sugar%20Plum%20Dark.mp3"),
+MUSIC_CATEGORIES = {
+    "UPBEAT": [
+        ("Sneaky Snitch", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sneaky%20Snitch.mp3"),
+        ("Monkeys Spinning Monkeys", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Monkeys%20Spinning%20Monkeys.mp3"),
+        ("Upbeat Party - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_02_-_Upbeat_Party.mp3"),
+        ("Comedie - Jahzzar", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Jahzzar_-_02_-_Comedie.mp3"),
+        ("Happy Boy End Theme", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Happy%20Boy%20End%20Theme.mp3"),
+        ("Splashing Around", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Splashing%20Around.mp3")
+    ],
+    "MYSTERIOUS": [
+        ("Darkest Child", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Darkest%20Child.mp3"),
+        ("Cipher", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Cipher.mp3"),
+        ("Echoes - Density & Time", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Echoes.mp3"),
+        ("Dreams Become Real - Kevin MacLeod", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Dreams_Become_Real.mp3")
+    ],
+    "TECH_CORPORATE": [
+        ("Corporate Success - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_03_-_Corporate_Success.mp3"),
+        ("Inspiring Presentation - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_01_-_Inspiring_Presentation.mp3"),
+        ("Crypto", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Crypto.mp3")
+    ],
+    "CALM_NATURE": [
+        ("Carefree", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Carefree.mp3"),
+        ("Solitude - Jahzzar", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Jahzzar_-_01_-_Solitude.mp3"),
+        ("Nimbus - Eveningland", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Nimbus.mp3"),
+        ("Perspectives", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Perspectives.mp3")
+    ]
+}
 
-    # Additional incompetech tracks
-    ("Splashing Around", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Splashing%20Around.mp3"),
-    ("Marty Gots a Plan", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Marty%20Gots%20a%20Plan.mp3"),
-    ("Amazing Plan", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Amazing%20Plan.mp3"),
-    ("Limit 70", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Limit%2070.mp3"),
-    ("Hard Boiled", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Hard%20Boiled.mp3"),
-    ("Perspectives", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Perspectives.mp3"),
-    ("Rumination", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Rumination.mp3"),
-    ("Rocket Power", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Rocket%20Power.mp3"),
-    ("Sunshine", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Sunshine.mp3"),
-    ("Crypto", "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Crypto.mp3"),
+def determine_category(topic):
+    topic = (topic or "").lower()
+    if any(w in topic for w in ["scary", "mystery", "space", "secret", "crime", "dark", "truth", "shocking"]):
+        return "MYSTERIOUS"
+    elif any(w in topic for w in ["tech", "ai", "coding", "business", "finance", "crypto", "money"]):
+        return "TECH_CORPORATE"
+    elif any(w in topic for w in ["nature", "calm", "relax", "health", "water", "forest"]):
+        return "CALM_NATURE"
+    return "UPBEAT"
 
-    # Free Music Archive highlights
-    ("Solitude - Jahzzar", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Jahzzar_-_01_-_Solitude.mp3"),
-    ("Comedie - Jahzzar", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Jahzzar_-_02_-_Comedie.mp3"),
-    ("Patience - Jahzzar", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Jahzzar_-_03_-_Patience.mp3"),
-    ("Inspiring Presentation - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_01_-_Inspiring_Presentation.mp3"),
-    ("Upbeat Party - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_02_-_Upbeat_Party.mp3"),
-    ("Corporate Success - Scott Holmes", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Scott_Holmes_-_03_-_Corporate_Success.mp3"),
-    ("Overcome - Ugonna Onyekwe", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Ugonna_Onyekwe_-_03_-_Overcome.mp3"),
-    ("Dreams Become Real - Kevin MacLeod", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Dreams_Become_Real.mp3"),
-    ("Nimbus - Eveningland", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Nimbus.mp3"),
-    ("Echoes - Density & Time", "https://ia903006.us.archive.org/29/items/Free_Music_Archive_CC_By/Echoes.mp3")
-]
+def download_sfx():
+    """Generates synthetic pop and whoosh SFX files if they don't exist."""
+    import numpy as np
+    import soundfile as sf
+    import os
+    
+    os.makedirs('assets', exist_ok=True)
+    
+    # 1. Generate "Pop"
+    pop_path = 'assets/pop.wav'
+    if not os.path.exists(pop_path):
+        sample_rate = 44100
+        t = np.linspace(0, 0.05, int(sample_rate * 0.05), False) # 50ms
+        freq = np.linspace(800, 200, len(t))
+        pop = np.sin(2 * np.pi * freq * t)
+        envelope = np.exp(-t * 100) # fast decay
+        sf.write(pop_path, pop * envelope * 0.5, sample_rate)
+        
+    # 2. Generate "Whoosh"
+    whoosh_path = 'assets/whoosh.wav'
+    if not os.path.exists(whoosh_path):
+        sample_rate = 44100
+        t = np.linspace(0, 0.3, int(sample_rate * 0.3), False) # 300ms
+        noise = np.random.normal(0, 1, len(t))
+        # envelope: attack then decay
+        envelope = np.sin(np.pi * t / 0.3) ** 2
+        sf.write(whoosh_path, noise * envelope * 0.15, sample_rate)
+        
+    return pop_path, whoosh_path
 
 
-def find_and_download_music(query, filename="assets/background_music.mp3", max_retries=5):
+def find_and_download_music(query, filename="assets/background_music.mp3", max_retries=5, topic=None):
     """
     Finds and downloads royalty-free music from reliable sources.
-    Sources are randomized each run to distribute usage and add variety.
+    Uses topic analysis to select the right vibe for the video.
     """
-    print("Finding background music...")
+    category = determine_category(topic)
+    print(f"Finding background music (Vibe: {category})...")
     print("  ⏳ Selecting music track...", end="", flush=True)
 
-    sources = ROYALTY_FREE_TRACKS.copy()
+    sources = MUSIC_CATEGORIES.get(category, MUSIC_CATEGORIES["UPBEAT"]).copy()
     random.shuffle(sources)
     attempts = min(max_retries, len(sources))
 

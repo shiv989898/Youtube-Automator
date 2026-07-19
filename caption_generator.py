@@ -5,12 +5,11 @@ import textwrap
 import numpy as np
 import random
 
-# Color schemes for visual variety and engagement
+# Color schemes for visual variety and engagement (High Contrast TikTok styles)
 CAPTION_COLORS = [
-    {'main': '#FFFFFF', 'glow': '#FFD700', 'outline': '#000000'},  # White with gold glow
-    {'main': '#FFFF00', 'glow': '#FF6B00', 'outline': '#000000'},  # Yellow with orange glow
-    {'main': '#00FF88', 'glow': '#00FFFF', 'outline': '#000000'},  # Mint with cyan glow
-    {'main': '#FF69B4', 'glow': '#FF1493', 'outline': '#000000'},  # Pink with magenta glow
+    {'main': '#FFFFFF', 'glow': '#000000', 'outline': '#000000', 'emphasis_color': '#FFFF00'}, # Yellow emphasis
+    {'main': '#FFFFFF', 'glow': '#000000', 'outline': '#000000', 'emphasis_color': '#FF0000'}, # Red emphasis
+    {'main': '#FFFFFF', 'glow': '#000000', 'outline': '#000000', 'emphasis_color': '#00FF00'}, # Green emphasis
 ]
 
 # Keywords that should be highlighted for emphasis
@@ -20,6 +19,7 @@ EMPHASIS_WORDS = [
     'free', 'now', 'today', 'new', 'real', 'actually', 'literally', 'seriously',
     'wait', 'stop', 'look', 'watch', 'listen', 'here', 'this', 'why', 'how',
     'money', 'rich', 'famous', 'viral', 'hack', 'trick', 'tip', 'fact',
+    'dangerous', 'warning', 'important', 'crucial', 'must', 'need'
 ]
 
 def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0):
@@ -47,7 +47,9 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     # Calculate timing for each phrase
     time_per_phrase = voiceover_duration / len(phrases) if phrases else 0
     
+    
     caption_clips = []
+    pop_timestamps = []
     current_time = 0
     
     # Select color scheme for this video (consistent throughout)
@@ -64,6 +66,9 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
             # Check if phrase contains emphasis words
             has_emphasis = any(word.lower().strip('.,!?') in EMPHASIS_WORDS 
                              for word in phrase.split())
+                             
+            if has_emphasis:
+                pop_timestamps.append(current_time)
 
             # Create caption image with emphasis styling
             caption_img = create_caption_image(
@@ -103,10 +108,10 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     if caption_clips:
         video_with_captions = CompositeVideoClip([video_clip] + caption_clips)
         print(f"✨ Added {len(caption_clips)} engaging caption segments")
-        return video_with_captions
+        return video_with_captions, pop_timestamps
     else:
         print("No captions to add")
-        return video_clip
+        return video_clip, []
 
 
 def create_caption_image(text, width=1080, height=350, color_scheme=None, emphasize=False):
@@ -176,7 +181,7 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
         draw.text((x + adj[0], y + adj[1]), wrapped_text, font=font, fill=glow_color, align='center')
     
     # Draw main text
-    main_color = glow_color if emphasize else color_scheme['main']  # Use glow color for emphasis
+    main_color = color_scheme.get('emphasis_color', '#FFFF00') if emphasize else color_scheme['main']
     draw.text((x, y), wrapped_text, font=font, fill=main_color, align='center')
     
     # Convert to numpy uint8 array with transparency (RGBA)

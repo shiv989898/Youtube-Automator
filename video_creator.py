@@ -66,6 +66,8 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         
         # Track which effects were used to ensure variety
         used_effects = []
+        cut_timestamps = []
+        current_time_for_cuts = 0
 
         for i, visual_file in enumerate(visual_files):
             clip = None
@@ -121,6 +123,9 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                     # (Removed crossfades here for better retention)
                     
                     clips.append(clip)
+                    if i > 0:
+                        cut_timestamps.append(current_time_for_cuts)
+                    current_time_for_cuts += duration_per_visual
 
             except Exception as e:
                 print(f"Warning: Could not process visual file {visual_file}: {e}")
@@ -148,15 +153,35 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         print("Note: Vignette effect disabled for stability")
 
         # --- Add Captions ---
+        pop_timestamps = []
         if script_text:
             try:
-                final_clip = caption_generator.add_captions_to_video(final_clip, script_text, total_duration)
+                final_clip, pop_timestamps = caption_generator.add_captions_to_video(final_clip, script_text, total_duration)
             except Exception as e:
                 print(f"Warning: Could not add captions: {e}")
                 print("Continuing without captions...")
 
         # --- Audio Composition ---
+        import music_finder
+        import os
+        pop_sfx_file, whoosh_sfx_file = music_finder.download_sfx()
+        
         audio_clips = [voiceover]
+        
+        # Add whoosh on cuts
+        if whoosh_sfx_file and os.path.exists(whoosh_sfx_file):
+            for t in cut_timestamps:
+                if t < total_duration:
+                    whoosh_clip = AudioFileClip(whoosh_sfx_file).set_start(t).volumex(0.2)
+                    audio_clips.append(whoosh_clip)
+                    
+        # Add pop on emphasis words
+        if pop_sfx_file and os.path.exists(pop_sfx_file):
+            for t in pop_timestamps:
+                if t < total_duration:
+                    pop_clip = AudioFileClip(pop_sfx_file).set_start(t).volumex(0.4)
+                    audio_clips.append(pop_clip)
+
         if music_file:
             try:
                 # Slightly louder background music for energy (but still below voice)
