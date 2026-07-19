@@ -19,9 +19,8 @@ google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
 
-# For Text-to-Speech (Kokoro primary, Edge TTS fallback)
-kokoro
-soundfile
+# For Text-to-Speech (Install Kokoro manually for local high-quality TTS)
+# pip install kokoro soundfile
 pyttsx3
 edge-tts==7.2.7
 gTTS
