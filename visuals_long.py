@@ -234,7 +234,7 @@ def get_visuals(topic, num_visuals: int = 8, target_duration: int = 180, script_
                     f"Downloading video {len(visual_files)+1}/{num_visuals} from Pexels: {video['id']} "
                     f"(score={relevance}, query='{matched_query}', ~{video_duration}s, {best.get('width')}x{best.get('height')})"
                 )
-                filename = f"long_visual_{len(visual_files)}.mp4"
+                filename = f"assets/long_visual_{len(visual_files)}.mp4"
                 
                 # Stream download with progress bar
                 try:
@@ -340,7 +340,7 @@ def get_visuals(topic, num_visuals: int = 8, target_duration: int = 180, script_
                     )
                     video_response = requests.get(video_url, timeout=60)
                     video_response.raise_for_status()
-                    filename = f"long_visual_{len(visual_files)}.mp4"
+                    filename = f"assets/long_visual_{len(visual_files)}.mp4"
                     with open(filename, "wb") as f:
                         f.write(video_response.content)
                     visual_files.append(filename)

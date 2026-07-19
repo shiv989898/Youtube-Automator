@@ -37,6 +37,7 @@ def main():
     """
     Main function to run the YouTube Shorts workflow.
     """
+    os.makedirs('assets', exist_ok=True)
     load_dotenv()
     setup_credentials()
 
@@ -74,8 +75,8 @@ def main():
     print(f"Cleaned script for voiceover:\n{cleaned_script}")
 
     print("Generating voiceover...")
-    voiceover.generate_voiceover("voiceover.mp3", cleaned_script)
-    voiceover_file = "voiceover.mp3"
+    voiceover.generate_voiceover("assets/voiceover.mp3", cleaned_script)
+    voiceover_file = "assets/voiceover.mp3"
     print(f"Voiceover saved to {voiceover_file}")
     
     # Calculate voiceover duration to optimize video downloads
@@ -115,12 +116,12 @@ def main():
         return
 
     print("Creating video...")
-    video_creator.create_video(visual_files, voiceover_file, "final_video.mp4", music_file, cleaned_script)
-    print("Video created successfully: final_video.mp4")
+    video_creator.create_video(visual_files, voiceover_file, "assets/final_video.mp4", music_file, cleaned_script)
+    print("Video created successfully: assets/final_video.mp4")
 
     print("Uploading to YouTube...")
     video_id = youtube_uploader.upload_to_youtube(
-        "final_video.mp4",
+        "assets/final_video.mp4",
         topic,
         cleaned_script
     )

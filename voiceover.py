@@ -3,13 +3,32 @@ import asyncio
 import pyttsx3
 import random
 import re
+import tempfile
 from edge_tts import Communicate
 import ssl
 import certifi
 from gtts import gTTS
 
-# Edge-TTS voices optimized for engaging, human-like delivery
-# Prioritized by natural conversational quality
+# ---------------------------------------------------------------------------
+# Kokoro TTS – high-quality local voices (Apache 2.0, 100% free & offline)
+# ---------------------------------------------------------------------------
+# Best Kokoro voices for YouTube narration – sorted by quality/engagement
+KOKORO_VOICES = [
+    "af_heart",          # Female, warm & expressive – best overall
+    "af_star",           # Female, bright & engaging
+    "am_adam",           # Male, clear narrator
+    "am_michael",        # Male, conversational
+    "af_jessica",        # Female, professional
+    "af_nicole",         # Female, friendly
+    "am_fenrir",         # Male, deep & authoritative
+    "af_sarah",          # Female, natural
+    "af_bella",          # Female, warm
+    "am_echo",           # Male, smooth
+]
+
+# ---------------------------------------------------------------------------
+# Edge-TTS voices (fallback) – optimized for engaging, human-like delivery
+# ---------------------------------------------------------------------------
 EDGE_VOICES = [
     "en-US-DavisNeural",      # Male, energetic & expressive - BEST for YouTube
     "en-US-JennyNeural",      # Female, friendly & natural
@@ -36,6 +55,72 @@ VOICE_STYLES = {
     "en-GB-SoniaNeural": "cheerful",      # Friendly British
 }
 
+
+# ===================================================================
+# Kokoro TTS generation (PRIMARY)
+# ===================================================================
+
+def _generate_kokoro_tts(text, filename, voice_name="af_heart"):
+    """
+    Generate voiceover using Kokoro TTS (local, high-quality, free).
+    Produces a WAV file then converts to MP3 for consistency with the rest
+    of the pipeline.
+    """
+    from kokoro import KPipeline
+    import soundfile as sf
+    import numpy as np
+
+    # 'a' = American English, 'b' = British English
+    lang_code = 'a'
+    if voice_name.startswith('b'):
+        lang_code = 'b'
+
+    pipeline = KPipeline(lang_code=lang_code)
+
+    # Kokoro streams audio in segments – collect them all
+    audio_segments = []
+    for _gs, _ps, audio in pipeline(text, voice=voice_name):
+        if audio is not None:
+            audio_segments.append(audio)
+
+    if not audio_segments:
+        raise Exception("Kokoro produced no audio segments")
+
+    full_audio = np.concatenate(audio_segments)
+
+    # Write WAV first (Kokoro outputs 24 kHz audio)
+    wav_path = filename.rsplit('.', 1)[0] + '_kokoro.wav'
+    sf.write(wav_path, full_audio, 24000)
+
+    # Convert WAV -> MP3 using moviepy (already in the project)
+    try:
+        from moviepy.editor import AudioFileClip
+        clip = AudioFileClip(wav_path)
+        clip.write_audiofile(filename, codec='libmp3lame', bitrate='192k',
+                             logger=None)
+        clip.close()
+    except Exception:
+        # If moviepy conversion fails, try ffmpeg directly
+        import subprocess
+        subprocess.run(
+            ['ffmpeg', '-y', '-i', wav_path, '-codec:a', 'libmp3lame',
+             '-b:a', '192k', filename],
+            capture_output=True, check=True,
+        )
+
+    # Clean up temp WAV
+    if os.path.exists(wav_path):
+        try:
+            os.remove(wav_path)
+        except OSError:
+            pass
+
+    return filename
+
+
+# ===================================================================
+# Edge TTS generation (FALLBACK)
+# ===================================================================
 
 async def _generate_edge_tts(text, filename, voice_name, use_ssml=True):
     """
@@ -223,8 +308,12 @@ def _preprocess_script_for_speech(text):
 def generate_voiceover(filename, text):
     """
     Generates natural, human-like voiceover optimized for YouTube retention.
-    Uses SSML prosody for emotional delivery and varied pacing.
-    Features: pauses, emphasis, pitch variation, and conversational tone.
+    
+    Priority chain:
+      1. Kokoro TTS (local, free, highest quality)
+      2. Edge TTS  (cloud, free, good quality)
+      3. gTTS      (cloud, free, basic)
+      4. pyttsx3   (local, free, last resort)
     """
     print("🎙️ Generating human-like voiceover...")
     
@@ -232,16 +321,46 @@ def generate_voiceover(filename, text):
     processed_text = _preprocess_script_for_speech(text)
     print(f"📝 Processed script for natural delivery ({len(processed_text)} chars)")
     
+    # ------------------------------------------------------------------
+    # 1) Try Kokoro TTS first (best quality, fully local)
+    # ------------------------------------------------------------------
+    print("\n🌟 Attempting Kokoro TTS (high-quality local engine)...")
+    random.shuffle(KOKORO_VOICES)
+    # Always try af_heart first – it's the best voice
+    voices_to_try = ["af_heart"] + [v for v in KOKORO_VOICES if v != "af_heart"]
+    
+    for i, voice in enumerate(voices_to_try[:5]):  # Try up to 5 voices
+        try:
+            print(f"  🔊 Trying Kokoro voice: {voice} ({i+1}/5)...")
+            _generate_kokoro_tts(processed_text, filename, voice)
+            
+            if os.path.exists(filename) and os.path.getsize(filename) > 5000:
+                size_kb = os.path.getsize(filename) / 1024
+                print(f"  ✅ Kokoro voiceover generated with '{voice}' ({size_kb:.0f} KB)")
+                return filename
+            else:
+                print(f"  ⚠️  Invalid file from Kokoro voice {voice}, trying next...")
+                if os.path.exists(filename):
+                    os.remove(filename)
+        except ImportError as e:
+            print(f"  ❌ Kokoro not installed: {e}")
+            print("  💡 Install with: pip install kokoro soundfile")
+            print("  💡 Also need espeak-ng: https://github.com/espeak-ng/espeak-ng/releases")
+            break  # No point trying other Kokoro voices if import fails
+        except Exception as e:
+            print(f"  ⚠️  Kokoro failed with {voice}: {e}")
+            continue
+    
+    # ------------------------------------------------------------------
+    # 2) Fallback to Edge TTS
+    # ------------------------------------------------------------------
+    print("\n⚡ Falling back to Edge TTS...")
     # Prioritize best voices for engagement (not random - quality first)
-    # First 4 voices are optimized for YouTube engagement
     priority_voices = EDGE_VOICES[:4]
     backup_voices = EDGE_VOICES[4:]
     random.shuffle(backup_voices)
     available_voices = priority_voices + backup_voices
     
-    print(f"Attempting to generate voiceover with {len(available_voices)} voices...")
-    
-    # Try edge-tts first (best quality)
     for i, voice in enumerate(available_voices):
         try:
             progress = int(((i + 1) / len(available_voices)) * 100)
@@ -256,7 +375,7 @@ def generate_voiceover(filename, text):
             if os.path.exists(filename) and os.path.getsize(filename) > 5000:
                 bar = "█" * 20
                 print(f"\r  Voice [{bar}] 100% - Success!")
-                print(f"  ✅ Human-like voiceover generated with {voice}")
+                print(f"  ✅ Edge TTS voiceover generated with {voice}")
                 return filename
             else:
                 print(f"\n  ⚠️  Invalid file from {voice}, trying next voice...")
@@ -275,8 +394,10 @@ def generate_voiceover(filename, text):
             else:
                 break
     
-    # Fallback to gTTS (works well in cloud environments like GitHub Actions)
-    print("\n[INFO] ⚠️ Edge-TTS failed, switching to gTTS...")
+    # ------------------------------------------------------------------
+    # 3) Fallback to gTTS
+    # ------------------------------------------------------------------
+    print("\n\n[INFO] ⚠️ Edge-TTS failed, switching to gTTS...")
     try:
         print("[INFO] 🌐 Requesting voiceover from Google TTS API...")
         tts = gTTS(text=text, lang='en', slow=False, tld='com')
@@ -293,7 +414,9 @@ def generate_voiceover(filename, text):
         import traceback
         traceback.print_exc()
         
-        # Last resort: pyttsx3 (local, reliable)
+        # ------------------------------------------------------------------
+        # 4) Last resort: pyttsx3 (local, reliable)
+        # ------------------------------------------------------------------
         print("[INFO] Falling back to local pyttsx3...")
         try:
             engine = pyttsx3.init()

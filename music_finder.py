@@ -42,7 +42,7 @@ ROYALTY_FREE_TRACKS = [
 ]
 
 
-def find_and_download_music(query, filename="background_music.mp3", max_retries=5):
+def find_and_download_music(query, filename="assets/background_music.mp3", max_retries=5):
     """
     Finds and downloads royalty-free music from reliable sources.
     Sources are randomized each run to distribute usage and add variety.

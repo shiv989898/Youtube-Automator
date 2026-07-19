@@ -1,10 +1,13 @@
 import os
 import pickle
+import time
+import random
+import httplib2
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-import random
+from googleapiclient.errors import HttpError
 
 def generate_engaging_title_long(topic):
     """
@@ -143,7 +146,17 @@ def upload_long_video(video_file, topic, description):
         }
     }
     
-    media = MediaFileUpload(video_file, chunksize=-1, resumable=True, mimetype='video/mp4')
+    # 10 MB chunks – large enough to be efficient, small enough to retry on
+    # flaky connections without losing too much progress.
+    CHUNK_SIZE = 10 * 1024 * 1024  # 10 MB
+    MAX_RETRIES = 10
+
+    media = MediaFileUpload(
+        video_file,
+        chunksize=CHUNK_SIZE,
+        resumable=True,
+        mimetype='video/mp4',
+    )
     
     request = youtube.videos().insert(
         part='snippet,status',
@@ -152,11 +165,36 @@ def upload_long_video(video_file, topic, description):
     )
     
     print("Starting long-form video upload...")
+    file_size_mb = os.path.getsize(video_file) / (1024 * 1024)
+    print(f"📦 File size: {file_size_mb:.1f} MB (uploading in {CHUNK_SIZE // (1024*1024)} MB chunks)")
+
     response = None
+    retry = 0
     while response is None:
-        status, response = request.next_chunk()
-        if status:
-            print(f"Upload progress: {int(status.progress() * 100)}%")
+        try:
+            status, response = request.next_chunk()
+            if status:
+                print(f"Upload progress: {int(status.progress() * 100)}%")
+            retry = 0  # Reset retry counter on success
+        except HttpError as e:
+            if e.resp.status in [500, 502, 503, 504]:
+                retry += 1
+                if retry > MAX_RETRIES:
+                    print(f"❌ Upload failed after {MAX_RETRIES} retries.")
+                    raise
+                wait = min(2 ** retry + random.random(), 60)
+                print(f"⚠️  Server error ({e.resp.status}), retrying in {wait:.1f}s... (attempt {retry}/{MAX_RETRIES})")
+                time.sleep(wait)
+            else:
+                raise
+        except (httplib2.HttpLib2Error, IOError, OSError) as e:
+            retry += 1
+            if retry > MAX_RETRIES:
+                print(f"❌ Upload failed after {MAX_RETRIES} retries due to network error.")
+                raise
+            wait = min(2 ** retry + random.random(), 60)
+            print(f"⚠️  Network error ({type(e).__name__}), retrying in {wait:.1f}s... (attempt {retry}/{MAX_RETRIES})")
+            time.sleep(wait)
     
     print(f"Upload complete! Video ID: {response['id']}")
     return response['id']

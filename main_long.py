@@ -39,6 +39,7 @@ def main():
     Main function to run the YouTube long-form video workflow.
     Creates horizontal format videos (1920x1080) for regular YouTube content.
     """
+    os.makedirs('assets', exist_ok=True)
     load_dotenv()
     setup_credentials()
 
@@ -80,8 +81,8 @@ def main():
 
     print(f"[STEP 3/{total_steps}] 🎙️  Generating voiceover...")
     print("Progress: [██████░░░░] 33%")
-    voiceover.generate_voiceover("voiceover_long.mp3", cleaned_script)
-    voiceover_file = "voiceover_long.mp3"
+    voiceover.generate_voiceover("assets/voiceover_long.mp3", cleaned_script)
+    voiceover_file = "assets/voiceover_long.mp3"
     print(f"✅ Voiceover saved to {voiceover_file}\n")
     
     # Calculate voiceover duration to optimize video downloads
@@ -125,8 +126,8 @@ def main():
     print(f"[STEP 6/{total_steps}] 🎬 Creating long-form video (this may take a while)...")
     print("Progress: [████████████] 67%")
     print("⏳ Processing video clips, adding effects, and rendering...")
-    long_video_creator.create_long_video(visual_files, voiceover_file, "final_long_video.mp4", music_file, cleaned_script)
-    print("\n✅ Long-form video created successfully: final_long_video.mp4\n")
+    long_video_creator.create_long_video(visual_files, voiceover_file, "assets/final_long_video.mp4", music_file, cleaned_script)
+    print("\n✅ Long-form video created successfully: assets/final_long_video.mp4\n")
 
     # Generate a soft subtitle file (.srt) alongside the video for YouTube
     print(f"[STEP 7/{total_steps}] 📝 Generating subtitles...")
@@ -138,10 +139,10 @@ def main():
         subtitle_generator_long.generate_srt_from_script(
             cleaned_script,
             voice.duration,
-            "final_long_video.srt",
+            "assets/final_long_video.srt",
         )
         voice.close()
-        print("✅ Subtitle file generated: final_long_video.srt\n")
+        print("✅ Subtitle file generated: assets/final_long_video.srt\n")
     except Exception as e:
         print(f"⚠️  Warning: Could not generate .srt subtitles: {e}\n")
 
@@ -149,7 +150,7 @@ def main():
     print("Progress: [████████████████] 89%")
     print("⏳ This may take several minutes depending on your connection...")
     video_id = youtube_uploader_long.upload_long_video(
-        "final_long_video.mp4",
+        "assets/final_long_video.mp4",
         topic,
         cleaned_script
     )

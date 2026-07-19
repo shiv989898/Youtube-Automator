@@ -183,7 +183,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         final_clip.write_videofile(output_file, 
                                   codec="libx264",
                                   audio_codec="aac",
-                                  temp_audiofile='temp-audio.m4a',
+                                  temp_audiofile='assets/temp-audio.m4a',
                                   remove_temp=True,
                                   fps=TARGET_FPS,  # Reduced FPS for lower memory footprint
                                   preset='faster',  # Faster encoding speed

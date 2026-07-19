@@ -219,7 +219,7 @@ def get_visuals(topic, num_visuals=5, target_duration=20, script_text=None):
                     )
                     
                     # Stream download with chunks for faster processing
-                    filename = f"visual_{len(visual_files)}.mp4"
+                    filename = f"assets/visual_{len(visual_files)}.mp4"
                     try:
                         with requests.get(video_url, stream=True, timeout=30) as video_response:
                             video_response.raise_for_status()
@@ -315,7 +315,7 @@ def get_visuals(topic, num_visuals=5, target_duration=20, script_text=None):
                         print(f"Downloading Pixabay video {video['id']} (score={score}, query='{matched_query}', ~{video_duration}s)")
                         
                         # Stream download with chunks
-                        filename = f"visual_{len(visual_files)}.mp4"
+                        filename = f"assets/visual_{len(visual_files)}.mp4"
                         try:
                             with requests.get(video_url, stream=True, timeout=30) as video_response:
                                 video_response.raise_for_status()

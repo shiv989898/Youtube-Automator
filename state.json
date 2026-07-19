@@ -1,0 +1,19 @@
+{
+    "topic": "The Science of Auroras (Northern & Southern Lights)",
+    "script": "**Host:** Your eyes are actually witnessing the sun violently punching our atmosphere.\n\n**Host:** Those dancing lights are just high-speed solar particles crashing into gas. It sounds beautiful, but it\u2019s actually a cosmic collision.\n\n**Host:** Here\u2019s the thing: it\u2019s literally magnetism protecting us from radiation. \n\n**Host:** Want to know what color comes next? Follow for part two!",
+    "cleaned_script": "Your eyes are actually witnessing the sun violently punching our atmosphere. Those dancing lights are just high-speed solar particles crashing into gas. It sounds beautiful, but it\u2019s actually a cosmic collision. Here\u2019s the thing: it\u2019s literally magnetism protecting us from radiation. Want to know what color comes next? Follow for part two!",
+    "voiceover_file": "assets/voiceover.mp3",
+    "voiceover_duration": 21,
+    "visual_count": 7,
+    "music_file": "assets/background_music.mp3",
+    "visual_files": [
+        "assets/visual_0.mp4",
+        "assets/visual_1.mp4",
+        "assets/visual_2.mp4",
+        "assets/visual_3.mp4",
+        "assets/visual_4.mp4",
+        "assets/visual_5.mp4",
+        "assets/visual_6.mp4"
+    ],
+    "video_id": "C_W1_RKRwVM"
+}

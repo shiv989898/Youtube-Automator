@@ -159,7 +159,7 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
         final_clip.write_videofile(output_file, 
                                   codec="libx264",
                                   audio_codec="aac",
-                                  temp_audiofile='temp-audio-long.m4a',
+                                  temp_audiofile='assets/temp-audio-long.m4a',
                                   remove_temp=True,
                                   fps=24,  # 24fps for faster processing
                                   preset='faster',  # Faster encoding speed
