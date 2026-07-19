@@ -165,7 +165,7 @@ def create_long_video(visual_files, voiceover_file, output_file, music_file=None
                                   preset='faster',  # Faster encoding speed
                                   bitrate="6000k",  # Slightly lower bitrate for faster encoding
                                   threads=8,  # Use more CPU threads
-                                  logger=None)  # Reduce memory overhead from logging
+                                  logger='bar')  # Show progress bar
         
         print(f"✨ Long-form video created successfully: {output_file}")
 
