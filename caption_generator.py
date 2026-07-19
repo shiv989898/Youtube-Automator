@@ -44,9 +44,10 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     if current_phrase:
         phrases.append(' '.join(current_phrase))
     
-    # Calculate timing for each phrase
-    time_per_phrase = voiceover_duration / len(phrases) if phrases else 0
-    
+    # Calculate total characters to distribute time proportionally
+    total_chars = sum(len(p) for p in phrases)
+    if total_chars == 0:
+        total_chars = 1
     
     caption_clips = []
     pop_timestamps = []
@@ -58,6 +59,11 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     for idx, phrase in enumerate(phrases):
         if not phrase.strip():
             continue
+            
+        # Calculate proportional time for this phrase
+        phrase_chars = len(phrase)
+        time_per_phrase = voiceover_duration * (phrase_chars / total_chars)
+        
         try:
             # Scaled caption dimensions
             cap_width = max(200, min(1920, int(video_clip.w * 0.9 * scale)))
@@ -129,6 +135,11 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     Features: dynamic colors, emphasis styling, bold readable fonts.
     Returns a numpy array suitable for MoviePy.
     """
+    # Sanitize text: Keep only letters, numbers, spaces, and basic punctuation
+    text = re.sub(r'[^a-zA-Z0-9\s?!.,\'-]', '', text)
+    if not text.strip():
+        text = " "
+        
     if color_scheme is None:
         color_scheme = CAPTION_COLORS[0]
     
@@ -140,33 +151,40 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     base_font_size = max(20, int(width * 0.095))
     font_size = int(base_font_size * 1.15) if emphasize else base_font_size
     
-    try:
-        # Try Impact font first (best for captions)
-        font = ImageFont.truetype("impact.ttf", font_size)
-    except:
+    def get_font(size):
         try:
-            font = ImageFont.truetype("arialbd.ttf", font_size)
+            return ImageFont.truetype("impact.ttf", size)
         except:
             try:
-                font = ImageFont.truetype("arial.ttf", font_size)
+                return ImageFont.truetype("arialbd.ttf", size)
             except:
                 try:
-                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
+                    return ImageFont.truetype("arial.ttf", size)
                 except:
-                    try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
-                    except:
-                        font = ImageFont.load_default()
+                    return ImageFont.load_default()
+                    
+    font = get_font(font_size)
     
-    # Wrap text to fit width
-    approx_chars = max(10, int(width / (font_size * 0.55)))
     # Force ALL text to uppercase for professional impact
     display_text = text.upper()
+    
+    # Wrap text to fit width
+    approx_chars = max(5, int(width / (font_size * 0.55)))
     wrapped_text = textwrap.fill(display_text, width=approx_chars)
     
-    # Get text bounding box
+    # Get text bounding box and scale down if it overflows
+    max_text_width = width - 40 # 20px padding on each side
     bbox = draw.textbbox((0, 0), wrapped_text, font=font)
     text_width = bbox[2] - bbox[0]
+    
+    while text_width > max_text_width and font_size > 10:
+        font_size -= 2
+        font = get_font(font_size)
+        approx_chars = max(5, int(width / (font_size * 0.55)))
+        wrapped_text = textwrap.fill(display_text, width=approx_chars)
+        bbox = draw.textbbox((0, 0), wrapped_text, font=font)
+        text_width = bbox[2] - bbox[0]
+        
     text_height = bbox[3] - bbox[1]
     
     # Calculate position (center)
