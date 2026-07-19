@@ -55,8 +55,8 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         total_duration = voiceover.duration
         
         # Shorter clip durations = faster cuts = better retention
-        # Max 3-4 seconds per visual keeps viewers engaged
-        max_visual_duration = 3.5
+        # Max 2-2.5 seconds per visual keeps viewers hyper-engaged (TikTok style)
+        max_visual_duration = 2.2
         duration_per_visual = min(max_visual_duration, 
                                   math.ceil(total_duration / len(visual_files))) if visual_files else 0
 
@@ -117,11 +117,8 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                         )
                     clip = clip.set_position(('center', 'center')).set_duration(duration_per_visual)
                     
-                    # Quick crossfades for snappy transitions
-                    if i > 0:
-                        clip = clip.crossfadein(0.15)
-                    if i < len(visual_files) - 1:
-                        clip = clip.crossfadeout(0.15)
+                    # Hard cuts for high-energy pacing (no crossfades)
+                    # (Removed crossfades here for better retention)
                     
                     clips.append(clip)
 

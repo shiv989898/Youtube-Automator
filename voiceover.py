@@ -9,8 +9,9 @@ import ssl
 import certifi
 from gtts import gTTS
 
-# ---------------------------------------------------------------------------
-# Kokoro TTS – high-quality local voices (Apache 2.0, 100% free & offline)
+# Global cache for Kokoro pipeline to prevent reloading 300MB model every generation
+_KOKORO_PIPELINES = {}
+
 # ---------------------------------------------------------------------------
 # Best Kokoro voices for YouTube narration – sorted by quality/engagement
 KOKORO_VOICES = [
@@ -69,13 +70,21 @@ def _generate_kokoro_tts(text, filename, voice_name="af_heart"):
     from kokoro import KPipeline
     import soundfile as sf
     import numpy as np
+    import torch
+
+    global _KOKORO_PIPELINES
 
     # 'a' = American English, 'b' = British English
     lang_code = 'a'
     if voice_name.startswith('b'):
         lang_code = 'b'
 
-    pipeline = KPipeline(lang_code=lang_code)
+    if lang_code not in _KOKORO_PIPELINES:
+        device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        print(f"  [Kokoro] Initializing model for '{lang_code}' on {device.upper()}...")
+        _KOKORO_PIPELINES[lang_code] = KPipeline(lang_code=lang_code, device=device)
+    
+    pipeline = _KOKORO_PIPELINES[lang_code]
 
     # Kokoro streams audio in segments – collect them all
     audio_segments = []

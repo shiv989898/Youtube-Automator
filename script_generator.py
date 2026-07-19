@@ -90,11 +90,12 @@ def generate_script(topic):
 
         CRITICAL RETENTION RULES (YouTube algorithm favors these):
         
-        1. HOOK (First 3 seconds - MOST IMPORTANT):
+        1. HOOK (First 2 seconds - MOST IMPORTANT):
            - Use this hook style: {selected_hook}
-           - NO greetings, NO "today we'll talk about"
+           - NO greetings. Hook MUST be UNDER 8 WORDS.
+           - NEVER use the word "you" in the first sentence unless asking a direct question.
            - First words must create instant curiosity or shock
-           - Pattern interrupt: Start mid-thought or with a question
+           - Pattern interrupt: Start mid-thought or with a bold claim
            
         2. LOOP STRUCTURE (Keeps viewers watching):
            - Tease something coming ("but wait, it gets crazier")
@@ -115,7 +116,7 @@ def generate_script(topic):
         Use contractions (don't, can't, it's) to sound natural.
 
         FORMAT:
-        **Host:** [Hook - ONE powerful sentence, 8-12 words]
+        **Host:** [Hook - ONE hyper-punchy sentence, under 8 words]
         **Host:** [Setup - build intrigue, 1-2 sentences]
         **Host:** [Twist/reveal - the "but here's the thing" moment]
         **Host:** [Payoff + CTA - deliver value, ask for engagement]

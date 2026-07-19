@@ -36,8 +36,8 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
     
     for word in words:
         current_phrase.append(word)
-        # Shorter phrases (2-3 words) create punchy, engaging captions
-        if len(current_phrase) >= 2 or word.endswith(('.', '!', '?', ',')):
+        # Ultra-short phrases (1-2 words max) create hyper-engaging captions (TikTok style)
+        if len(current_phrase) >= 1 or word.endswith(('.', '!', '?', ',')):
             phrases.append(' '.join(current_phrase))
             current_phrase = []
     
@@ -81,7 +81,14 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
             position_y = int(video_clip.h * (0.72 if scale < 0.9 else 0.68))
             img_clip = img_clip.set_position(('center', position_y))
             img_clip = img_clip.set_start(current_time)
-            img_clip = img_clip.set_duration(min(time_per_phrase, voiceover_duration - current_time))
+            
+            dur = min(time_per_phrase, voiceover_duration - current_time)
+            img_clip = img_clip.set_duration(dur)
+            
+            # Add dynamic "pop" animation (scales from 0.8 to 1.0 quickly)
+            pop_duration = min(0.08, dur / 2)
+            if pop_duration > 0:
+                img_clip = img_clip.resize(lambda t: min(1.0, 0.75 + 0.25 * (t / pop_duration)))
 
             caption_clips.append(img_clip)
             current_time += time_per_phrase
