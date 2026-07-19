@@ -90,10 +90,19 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
             dur = min(time_per_phrase, voiceover_duration - current_time)
             img_clip = img_clip.set_duration(dur)
             
-            # Add dynamic "pop" animation (scales from 0.8 to 1.0 quickly)
-            pop_duration = min(0.08, dur / 2)
+            # Add dynamic "overshoot" animation for springy bounce
+            pop_duration = min(0.12, dur / 2)
             if pop_duration > 0:
-                img_clip = img_clip.resize(lambda t: min(1.0, 0.75 + 0.25 * (t / pop_duration)))
+                def scale_func(t):
+                    if t < pop_duration / 2:
+                        progress = t / (pop_duration / 2)
+                        return 0.7 + (0.45 * progress)  # 0.7 -> 1.15
+                    elif t < pop_duration:
+                        progress = (t - (pop_duration / 2)) / (pop_duration / 2)
+                        return 1.15 - (0.15 * progress) # 1.15 -> 1.0
+                    else:
+                        return 1.0
+                img_clip = img_clip.resize(scale_func)
 
             caption_clips.append(img_clip)
             current_time += time_per_phrase
@@ -151,8 +160,8 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     
     # Wrap text to fit width
     approx_chars = max(10, int(width / (font_size * 0.55)))
-    # Convert to uppercase for emphasis words (YouTube style)
-    display_text = text.upper() if emphasize else text
+    # Force ALL text to uppercase for professional impact
+    display_text = text.upper()
     wrapped_text = textwrap.fill(display_text, width=approx_chars)
     
     # Get text bounding box
@@ -164,23 +173,25 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     x = (width - text_width) // 2
     y = (height - text_height) // 2
     
-    # Draw thicker outline for better readability
-    outline_width = max(3, font_size // 15)
+    # 1. Draw 3D Extrusion Drop Shadow first (so it sits behind everything)
+    shadow_depth = max(4, font_size // 12)
+    shadow_color = '#000000'
+    for d in range(1, shadow_depth + 1):
+        # We draw a thick stroke for each step of the extrusion to ensure it's solid
+        extrusion_thickness = max(2, font_size // 20)
+        for adj_x in range(-extrusion_thickness, extrusion_thickness + 1):
+            for adj_y in range(-extrusion_thickness, extrusion_thickness + 1):
+                draw.text((x + d + adj_x, y + d + adj_y), wrapped_text, font=font, fill=shadow_color, align='center')
+                
+    # 2. Draw crisp outline around the main text
+    outline_width = max(2, font_size // 20)
     outline_color = color_scheme['outline']
     for adj_x in range(-outline_width, outline_width + 1):
         for adj_y in range(-outline_width, outline_width + 1):
             if adj_x != 0 or adj_y != 0:
                 draw.text((x + adj_x, y + adj_y), wrapped_text, font=font, fill=outline_color, align='center')
 
-    # Draw glow effect (more prominent for emphasis)
-    glow_color = color_scheme['glow']
-    glow_width = max(2, font_size // 25) if emphasize else max(1, font_size // 40)
-    for adj in [(-glow_width, 0), (glow_width, 0), (0, -glow_width), (0, glow_width),
-                (-glow_width, -glow_width), (glow_width, glow_width),
-                (-glow_width, glow_width), (glow_width, -glow_width)]:
-        draw.text((x + adj[0], y + adj[1]), wrapped_text, font=font, fill=glow_color, align='center')
-    
-    # Draw main text
+    # 3. Draw main text on top
     main_color = color_scheme.get('emphasis_color', '#FFFF00') if emphasize else color_scheme['main']
     draw.text((x, y), wrapped_text, font=font, fill=main_color, align='center')
     
