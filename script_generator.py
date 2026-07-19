@@ -112,8 +112,10 @@ def generate_script(topic):
            - End with curiosity for more: "Follow for part 2" or "Comment your guess"
            - Never end flat - end on emotion or question
 
-        TONE: Conversational, like telling a friend something wild you just learned.
-        Use contractions (don't, can't, it's) to sound natural.
+        TONE: Unscripted and highly conversational. Sound like a real person talking off-the-cuff, not an AI reading an essay.
+        - Use conversational bridges to start sentences (e.g., "Look,", "Wait,", "Here's the crazy part,", "So get this,").
+        - Use contractions (don't, can't, it's) to sound natural.
+        - Occasionally use short sentence fragments for emphasis.
 
         FORMAT:
         **Host:** [Hook - ONE hyper-punchy sentence, under 8 words]

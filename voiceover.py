@@ -88,7 +88,7 @@ def _generate_kokoro_tts(text, filename, voice_name="af_heart"):
 
     # Kokoro streams audio in segments – collect them all
     audio_segments = []
-    for _gs, _ps, audio in pipeline(text, voice=voice_name):
+    for _gs, _ps, audio in pipeline(text, voice=voice_name, speed=1.1):
         if audio is not None:
             audio_segments.append(audio)
 
@@ -303,6 +303,14 @@ def _preprocess_script_for_speech(text):
     }
     for formal, casual in replacements.items():
         text = re.sub(rf'\b{formal}\b', casual, text, flags=re.IGNORECASE)
+    
+    # Inject natural breathing pauses for TTS
+    # Replace some commas with ellipses (...) to force the TTS to take a human breath
+    words = text.split()
+    for i in range(len(words)):
+        if words[i].endswith(',') and random.random() < 0.4:
+            words[i] = words[i][:-1] + "..."
+    text = " ".join(words)
     
     # Clean up extra whitespace and punctuation
     text = re.sub(r'\s+', ' ', text)           # multiple spaces to single
