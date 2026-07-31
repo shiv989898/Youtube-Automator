@@ -17,6 +17,6 @@ REM Infinite loop to run the long video automation
     echo Waiting 1 hour before next run...
     echo ========================================
     
-    timeout /t 3600 /nobreak
+    timeout /t 1 /nobreak
     
     goto loop

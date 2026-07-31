@@ -41,7 +41,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
             caption_img = create_caption_image(
                 phrase.strip(),
                 width=video_clip.w,
-                height=200  # Smaller height for horizontal format
+                height=300  # Smaller height for horizontal format
             )
             
             # Convert to ImageClip
@@ -66,7 +66,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration):
         return video_clip
 
 
-def create_caption_image(text, width=1920, height=200):
+def create_caption_image(text, width=1920, height=300):
     """
     Creates an attractive caption image for horizontal videos using PIL/Pillow.
     Features: professional font, outline, positioned for 16:9 format.
@@ -77,7 +77,7 @@ def create_caption_image(text, width=1920, height=200):
     draw = ImageDraw.Draw(img)
     
     # Use professional font size for horizontal format
-    font_size = 60  # Reduced font size for better viewing
+    font_size = 100  # Reduced font size for better viewing
     try:
         # Try to use Arial Black or Bold for impact (Windows)
         font = ImageFont.truetype("arialbd.ttf", font_size)

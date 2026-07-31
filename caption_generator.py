@@ -67,7 +67,7 @@ def add_captions_to_video(video_clip, script_text, voiceover_duration, scale=1.0
         try:
             # Scaled caption dimensions
             cap_width = max(200, min(1920, int(video_clip.w * 0.9 * scale)))
-            cap_height = max(50, min(200, int(160 * scale)))
+            cap_height = max(50, min(350, int(250 * scale)))
             
             # Check if phrase contains emphasis words
             has_emphasis = any(word.lower().strip('.,!?') in EMPHASIS_WORDS 
@@ -148,7 +148,7 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     draw = ImageDraw.Draw(img)
     
     # Larger font for emphasis words, slightly bigger base size for readability
-    base_font_size = max(20, int(width * 0.095))
+    base_font_size = max(30, int(width * 0.135))
     font_size = int(base_font_size * 1.15) if emphasize else base_font_size
     
     def get_font(size):

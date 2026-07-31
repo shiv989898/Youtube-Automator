@@ -161,8 +161,17 @@ def upload_to_youtube(video_file, topic, script_text):
 
     credentials = None
     if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            credentials = pickle.load(token)
+        try:
+            import sys, types
+            if 'google.auth._regional_access_boundary_utils' not in sys.modules:
+                mod = types.ModuleType('google.auth._regional_access_boundary_utils')
+                setattr(mod, '__getattr__', lambda name: type(name, (), {'__init__': lambda self, *a, **kw: None}))
+                sys.modules['google.auth._regional_access_boundary_utils'] = mod
+            with open('token.pickle', 'rb') as token:
+                credentials = pickle.load(token)
+        except Exception as e:
+            print(f"⚠️  Could not load existing token.pickle ({e}). Re-authenticating...")
+            credentials = None
 
     if not credentials or not credentials.valid:
         if credentials and credentials.expired and credentials.refresh_token:

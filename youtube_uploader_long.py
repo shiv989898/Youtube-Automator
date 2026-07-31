@@ -102,8 +102,17 @@ def upload_long_video(video_file, topic, description):
     
     creds = None
     if os.path.exists('token.pickle'):
-        with open('token.pickle', 'rb') as token:
-            creds = pickle.load(token)
+        try:
+            import sys, types
+            if 'google.auth._regional_access_boundary_utils' not in sys.modules:
+                mod = types.ModuleType('google.auth._regional_access_boundary_utils')
+                setattr(mod, '__getattr__', lambda name: type(name, (), {'__init__': lambda self, *a, **kw: None}))
+                sys.modules['google.auth._regional_access_boundary_utils'] = mod
+            with open('token.pickle', 'rb') as token:
+                creds = pickle.load(token)
+        except Exception as e:
+            print(f"⚠️  Could not load existing token.pickle ({e}). Re-authenticating...")
+            creds = None
     
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
@@ -146,9 +155,8 @@ def upload_long_video(video_file, topic, description):
         }
     }
     
-    # 10 MB chunks – large enough to be efficient, small enough to retry on
-    # flaky connections without losing too much progress.
-    CHUNK_SIZE = 10 * 1024 * 1024  # 10 MB
+    # High-speed upload without small chunk bottleneck
+    CHUNK_SIZE = -1
     MAX_RETRIES = 10
 
     media = MediaFileUpload(
@@ -166,7 +174,7 @@ def upload_long_video(video_file, topic, description):
     
     print("Starting long-form video upload...")
     file_size_mb = os.path.getsize(video_file) / (1024 * 1024)
-    print(f"📦 File size: {file_size_mb:.1f} MB (uploading in {CHUNK_SIZE // (1024*1024)} MB chunks)")
+    print(f"📦 File size: {file_size_mb:.1f} MB (high-speed upload stream)")
 
     response = None
     retry = 0
