@@ -152,16 +152,22 @@ def create_caption_image(text, width=1080, height=350, color_scheme=None, emphas
     font_size = int(base_font_size * 1.15) if emphasize else base_font_size
     
     def get_font(size):
-        try:
-            return ImageFont.truetype("impact.ttf", size)
-        except:
+        font_paths = [
+            "impact.ttf", "arialbd.ttf", "arial.ttf",
+            "C:\\Windows\\Fonts\\impact.ttf",
+            "C:\\Windows\\Fonts\\arialbd.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+            "/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"
+        ]
+        for path in font_paths:
             try:
-                return ImageFont.truetype("arialbd.ttf", size)
+                return ImageFont.truetype(path, size)
             except:
-                try:
-                    return ImageFont.truetype("arial.ttf", size)
-                except:
-                    return ImageFont.load_default()
+                continue
+        print("Warning: No suitable TrueType font found. Falling back to default font (which is tiny).")
+        return ImageFont.load_default()
                     
     font = get_font(font_size)
     

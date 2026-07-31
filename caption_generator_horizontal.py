@@ -78,26 +78,26 @@ def create_caption_image(text, width=1920, height=300):
     
     # Use professional font size for horizontal format
     font_size = 100  # Reduced font size for better viewing
-    try:
-        # Try to use Arial Black or Bold for impact (Windows)
-        font = ImageFont.truetype("arialbd.ttf", font_size)
-    except:
+    font_paths = [
+        "arialbd.ttf", "arial.ttf", "impact.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf",
+        "C:\\Windows\\Fonts\\arial.ttf",
+        "C:\\Windows\\Fonts\\impact.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        "/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf",
+        "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf"
+    ]
+    font = None
+    for path in font_paths:
         try:
-            font = ImageFont.truetype("arial.ttf", font_size)
+            font = ImageFont.truetype(path, font_size)
+            break
         except:
-            try:
-                # Try common Windows fonts
-                font = ImageFont.truetype("impact.ttf", font_size)
-            except:
-                try:
-                    # Linux/Ubuntu fonts (for GitHub Actions)
-                    font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", font_size)
-                except:
-                    try:
-                        font = ImageFont.truetype("/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf", font_size)
-                    except:
-                        # Fallback to default
-                        font = ImageFont.load_default()
+            continue
+    if font is None:
+        print("Warning: No suitable TrueType font found. Falling back to default font (which is tiny).")
+        font = ImageFont.load_default()
     
     # Wrap text to fit width (more characters per line for horizontal format)
     wrapped_text = textwrap.fill(text, width=30)  # More characters for 1920px width

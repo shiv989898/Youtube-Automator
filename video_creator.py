@@ -68,8 +68,11 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
         used_effects = []
         cut_timestamps = []
         current_time_for_cuts = 0
+        visual_index = 0
 
-        for i, visual_file in enumerate(visual_files):
+        while current_time_for_cuts < total_duration:
+            visual_file = visual_files[visual_index % len(visual_files)]
+            visual_index += 1
             clip = None
             try:
                 # Select effect ensuring variety
@@ -123,7 +126,7 @@ def create_video(visual_files, voiceover_file, output_file, music_file=None, scr
                     # (Removed crossfades here for better retention)
                     
                     clips.append(clip)
-                    if i > 0:
+                    if len(clips) > 1:
                         cut_timestamps.append(current_time_for_cuts)
                     current_time_for_cuts += duration_per_visual
 
