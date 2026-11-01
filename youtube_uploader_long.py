@@ -94,9 +94,9 @@ def _clean_description(text: str, max_length: int = 4900) -> str:
     return cleaned
 
 
-def upload_long_video(video_file, topic, description):
+def upload_long_video(video_file, topic, description, custom_title=None, custom_description=None, thumbnail_file=None):
     """
-    Uploads a long-form video to YouTube with appropriate settings.
+    Uploads a long-form video to YouTube with appropriate settings or custom metadata.
     """
     SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
     
@@ -127,20 +127,25 @@ def upload_long_video(video_file, topic, description):
     
     youtube = build('youtube', 'v3', credentials=creds)
     
-    title = generate_engaging_title_long(topic)
+    # Custom title or auto-generated
+    if custom_title and custom_title.strip():
+        title = custom_title.strip()
+    else:
+        title = generate_engaging_title_long(topic)
+        
     tags = generate_tags_long(topic)
 
-    # For long-form videos, avoid dumping the full script into the
-    # description. Use a short, clean template based only on the topic.
-    base_description = f"In this video, we explore {topic} in a clear and engaging way, breaking it down into simple, practical insights."
-    safe_description = _clean_description(base_description, max_length=800)
-
-    # Final description shown on YouTube
-    full_description = f"{safe_description}\n\n"
-    full_description += "🔔 Subscribe for more educational content!\n"
-    full_description += "👍 Like if you found this helpful!\n"
-    full_description += "💬 Comment your thoughts below!\n\n"
-    full_description += "#education #learning #knowledge #tutorial #explained"
+    # Custom description or template
+    if custom_description and custom_description.strip():
+        full_description = custom_description.strip()
+    else:
+        base_description = f"In this video, we explore {topic} in a clear and engaging way, breaking it down into simple, practical insights."
+        safe_description = _clean_description(base_description, max_length=800)
+        full_description = f"{safe_description}\n\n"
+        full_description += "🔔 Subscribe for more educational content!\n"
+        full_description += "👍 Like if you found this helpful!\n"
+        full_description += "💬 Comment your thoughts below!\n\n"
+        full_description += "#education #learning #knowledge #tutorial #explained"
     
     request_body = {
         'snippet': {
