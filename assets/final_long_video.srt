@@ -1,135 +1,251 @@
 1
-00:00:00,000 --> 00:00:02,070
-Host: A homing pigeon can be released
+00:00:00,000 --> 00:00:02,290
+Host: Across the globe, ancient civilizations carved,
 
 2
-00:00:02,070 --> 00:00:04,141
-hundreds of miles from home and return
+00:00:02,290 --> 00:00:04,580
+transported, and assembled massive stone monuments that
 
 3
-00:00:04,141 --> 00:00:06,211
-with pinpoint accuracy, but how do they
+00:00:04,580 --> 00:00:06,870
+defy modern logic and challenge our understanding
 
 4
-00:00:06,211 --> 00:00:08,282
-actually do it?
+00:00:06,870 --> 00:00:09,160
+of history.
 
 5
-00:00:08,282 --> 00:00:10,352
-Host: We’ll uncover the biological "GPS" systems
+00:00:09,160 --> 00:00:11,449
+Host: Today, we will explore the engineering
 
 6
-00:00:10,352 --> 00:00:12,423
-hidden inside these birds that allow them
+00:00:11,449 --> 00:00:13,739
+marvels of the ancient world and uncover
 
 7
-00:00:12,423 --> 00:00:14,494
-to master navigation.
+00:00:13,739 --> 00:00:16,029
+why these megalithic structures remain one of
 
 8
-00:00:14,494 --> 00:00:16,564
-Host: First, pigeons use the Earth’s magnetic
+00:00:16,029 --> 00:00:18,319
+archaeology's greatest, most enduring enigmas.
 
 9
-00:00:16,564 --> 00:00:18,635
-field as a map.
+00:00:18,319 --> 00:00:20,609
+Host: Megalithic sites, such as Stonehenge in
 
 10
-00:00:18,635 --> 00:00:20,705
-They possess tiny magnetic particles in their
+00:00:20,609 --> 00:00:22,899
+England or the temples of Malta, are
 
 11
-00:00:20,705 --> 00:00:22,776
-beaks that function like a compass, sensing
+00:00:22,899 --> 00:00:25,189
+defined by their sheer scale.
 
 12
-00:00:22,776 --> 00:00:24,847
-the planet's intensity and inclination.
+00:00:25,189 --> 00:00:27,479
+Thousands of years before the invention of
 
 13
-00:00:24,847 --> 00:00:26,917
-It’s a literal internal sensor.
+00:00:27,479 --> 00:00:29,769
+the wheel or modern machinery, humans moved
 
 14
-00:00:26,917 --> 00:00:28,988
-Host: But magnets aren't enough; they also
+00:00:29,769 --> 00:00:32,059
+multi-ton stone slabs across vast, rugged landscapes.
 
 15
-00:00:28,988 --> 00:00:31,058
-use visual landmarks.
+00:00:32,059 --> 00:00:34,349
+These stones were often sourced from quarries
 
 16
-00:00:31,058 --> 00:00:33,129
-These birds create mental maps of highways,
+00:00:34,349 --> 00:00:36,639
+located miles away, requiring sophisticated coordination and
 
 17
-00:00:33,129 --> 00:00:35,200
-coastlines, and even city grids.
+00:00:36,639 --> 00:00:38,929
+immense labor.
 
 18
-00:00:35,200 --> 00:00:37,270
-Scientists have discovered that pigeons will actually
+00:00:38,929 --> 00:00:41,219
+Archaeologists are still debating whether this was
 
 19
-00:00:37,270 --> 00:00:39,341
-follow human-made roads, choosing to "commute" rather
+00:00:41,219 --> 00:00:43,509
+achieved through simple brute force or advanced
 
 20
-00:00:39,341 --> 00:00:41,411
-than fly in a straight line.
+00:00:43,509 --> 00:00:45,799
+techniques we have yet to discover.
 
 21
-00:00:41,411 --> 00:00:43,482
-Host: Surprisingly, they can even smell their
+00:00:45,799 --> 00:00:48,089
+We have to wonder: was this the
 
 22
-00:00:43,482 --> 00:00:45,552
-way home.
+00:00:48,089 --> 00:00:50,379
+product of lost ancient physics, or sheer
 
 23
-00:00:45,552 --> 00:00:47,623
-They use an "olfactory map" to detect
+00:00:50,379 --> 00:00:52,669
+human determination?
 
 24
-00:00:47,623 --> 00:00:49,694
-environmental scents.
+00:00:52,669 --> 00:00:54,959
+Host: Beyond the physical labor, the astronomical
 
 25
-00:00:49,694 --> 00:00:51,764
-But wait—how do they handle cloudy days
+00:00:54,959 --> 00:00:57,249
+precision embedded in these structures is arguably
 
 26
-00:00:51,764 --> 00:00:53,835
-when the sun is hidden?
+00:00:57,249 --> 00:00:59,539
+more impressive.
 
 27
-00:00:53,835 --> 00:00:55,905
-Host: Pigeons combine magnetism, vision, and smell
+00:00:59,539 --> 00:01:01,829
+Many megaliths align perfectly with solar solstices,
 
 28
-00:00:55,905 --> 00:00:57,976
-into a multi-layered navigation suite that far
+00:01:01,829 --> 00:01:04,119
+lunar cycles, or specific star constellations.
 
 29
-00:00:57,976 --> 00:01:00,047
-surpasses human technology.
+00:01:04,119 --> 00:01:06,409
+At Goseck Circle in Germany, the layout
 
 30
-00:01:00,047 --> 00:01:02,117
-By syncing these senses, they guarantee a
+00:01:06,409 --> 00:01:08,700
+functions as a massive observatory, tracking celestial
 
 31
-00:01:02,117 --> 00:01:04,188
-safe arrival home regardless of the conditions.
+00:01:08,700 --> 00:01:10,990
+movements with startling accuracy.
 
 32
-00:01:04,188 --> 00:01:06,258
-Host: Now you know their secret.
+00:01:10,990 --> 00:01:13,280
+This suggests that these ancient cultures possessed
 
 33
-00:01:06,258 --> 00:01:08,329
-If you found this flight plan fascinating,
+00:01:13,280 --> 00:01:15,570
+a profound scientific knowledge long before the
 
 34
-00:01:08,329 --> 00:01:10,400
-hit subscribe for more daily mysteries decoded!
+00:01:15,570 --> 00:01:17,860
+written record existed.
+
+35
+00:01:17,860 --> 00:01:20,150
+But if they were just "primitive" societies,
+
+36
+00:01:20,150 --> 00:01:22,440
+how did they master the complex mathematics
+
+37
+00:01:22,440 --> 00:01:24,730
+of the stars?
+
+38
+00:01:24,730 --> 00:01:27,020
+Host: Even more perplexing is the "impossible
+
+39
+00:01:27,020 --> 00:01:29,310
+masonry" found in sites like Peru’s Sacsayhuamán
+
+40
+00:01:29,310 --> 00:01:31,600
+or the Great Pyramids.
+
+41
+00:01:31,600 --> 00:01:33,890
+In many cases, massive blocks are fitted
+
+42
+00:01:33,890 --> 00:01:36,180
+together so tightly that you cannot slide
+
+43
+00:01:36,180 --> 00:01:38,470
+a credit card between them, despite having
+
+44
+00:01:38,470 --> 00:01:40,760
+irregular shapes and no mortar.
+
+45
+00:01:40,760 --> 00:01:43,050
+Some researchers suggest ancient builders used high-heat
+
+46
+00:01:43,050 --> 00:01:45,340
+vitrification or acoustic levitation, though mainstream science
+
+47
+00:01:45,340 --> 00:01:47,630
+remains skeptical.
+
+48
+00:01:47,630 --> 00:01:49,920
+We will soon analyze the most controversial
+
+49
+00:01:49,920 --> 00:01:52,210
+theory regarding these stones: could a lost
+
+50
+00:01:52,210 --> 00:01:54,500
+global civilization be responsible?
+
+51
+00:01:54,500 --> 00:01:56,790
+Host: The mystery of megalithic structures reminds
+
+52
+00:01:56,790 --> 00:01:59,080
+us that human ingenuity has always been
+
+53
+00:01:59,080 --> 00:02:01,370
+capable of the extraordinary, even without our
+
+54
+00:02:01,370 --> 00:02:03,660
+current tools.
+
+55
+00:02:03,660 --> 00:02:05,950
+Whether through forgotten technologies or unparalleled patience,
+
+56
+00:02:05,950 --> 00:02:08,240
+these monuments serve as stone witnesses to
+
+57
+00:02:08,240 --> 00:02:10,530
+a sophisticated history we are only just
+
+58
+00:02:10,530 --> 00:02:12,820
+beginning to decode.
+
+59
+00:02:12,820 --> 00:02:15,110
+Host: If these silent giants intrigue you,
+
+60
+00:02:15,110 --> 00:02:17,400
+hit the subscribe button and comment below:
+
+61
+00:02:17,400 --> 00:02:19,690
+do you believe ancient humans had "lost"
+
+62
+00:02:19,690 --> 00:02:21,980
+technology, or are we underestimating their raw
+
+63
+00:02:21,980 --> 00:02:24,270
+capability?
