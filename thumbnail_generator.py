@@ -12,10 +12,17 @@ if hasattr(sys.stdout, 'reconfigure'):
 if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
+from dotenv import load_dotenv
+load_dotenv()
+
+POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY")
+
 POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
+if POLLINATIONS_API_KEY:
+    HEADERS["Authorization"] = f"Bearer {POLLINATIONS_API_KEY}"
 
 
 def _get_font(size: int = 56):

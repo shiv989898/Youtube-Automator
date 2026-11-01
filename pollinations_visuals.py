@@ -11,12 +11,19 @@ if hasattr(sys.stdout, 'reconfigure'):
 if hasattr(sys.stderr, 'reconfigure'):
     sys.stderr.reconfigure(encoding='utf-8', errors='replace')
 
-# Pollinations AI image endpoint (100% free, no API key required)
+from dotenv import load_dotenv
+load_dotenv()
+
+POLLINATIONS_API_KEY = os.getenv("POLLINATIONS_API_KEY")
+
+# Pollinations AI image endpoint (100% free, no API key required, optional API key to bypass rate limits)
 POLLINATIONS_BASE_URL = "https://image.pollinations.ai/prompt/"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 }
+if POLLINATIONS_API_KEY:
+    HEADERS["Authorization"] = f"Bearer {POLLINATIONS_API_KEY}"
 
 
 def sanitize_filename(name: str) -> str:
@@ -61,26 +68,33 @@ def download_pollinations_image(
     width: int = 720,
     height: int = 1280,
     model: str = "flux",
-    retries: int = 2
+    retries: int = 2,
+    allow_sleep: bool = True
 ) -> bool:
     """
     Downloads a single AI-generated image from Pollinations.ai.
-    Handles free-tier rate limits gracefully.
+    Uses POLLINATIONS_API_KEY if available to bypass the 45s rate limit.
     """
     clean_prompt = prompt[:200]
     encoded_prompt = urllib.parse.quote(clean_prompt)
     seed = int(time.time() * 1000) % 1000000
     url = f"{POLLINATIONS_BASE_URL}{encoded_prompt}?width={width}&height={height}&seed={seed}&nologo=true&model={model}"
+    if POLLINATIONS_API_KEY:
+        url += f"&key={POLLINATIONS_API_KEY}"
+
+    headers = dict(HEADERS)
 
     for attempt in range(retries):
         try:
-            resp = requests.get(url, headers=HEADERS, timeout=35)
+            resp = requests.get(url, headers=headers, timeout=35)
             if resp.status_code == 200 and len(resp.content) > 5000:
                 with open(output_path, "wb") as f:
                     f.write(resp.content)
                 return True
             elif resp.status_code == 402:
-                # Free tier limit (1 image every 45s)
+                # Free tier limit (1 image every 45s without API key)
+                if not allow_sleep:
+                    return False
                 try:
                     data = resp.json()
                     err_msg = data.get("error", {}).get("message", "")
@@ -106,11 +120,14 @@ def get_ai_visuals(
     topic: str,
     visual_count: int,
     is_vertical: bool = True,
-    script_text: Optional[str] = None
+    script_text: Optional[str] = None,
+    strict_ai: bool = False
 ) -> List[str]:
     """
-    Generates a full set of custom AI visuals tailored to the script and topic.
-    Saves them as .jpg files ready for MoviePy video rendering.
+    Generates custom AI visuals tailored to the script and topic.
+    If the free-tier rate limit (45s wait per image) is encountered and strict_ai is False,
+    it automatically supplements with fast high-definition tech stock visuals so generation
+    finishes immediately without 12+ minutes of stalling.
     """
     os.makedirs("assets", exist_ok=True)
     width = 720 if is_vertical else 1280
@@ -121,22 +138,58 @@ def get_ai_visuals(
     prompts = generate_scene_prompts(topic, script_text or topic, visual_count)
 
     visual_files = []
+    has_api_key = bool(POLLINATIONS_API_KEY)
+    allow_sleep = strict_ai or has_api_key
+
     for idx, prompt in enumerate(prompts):
         file_path = os.path.abspath(f"assets/{prefix}_{idx}.jpg")
         print(f"[{idx+1}/{visual_count}] Generating: {prompt[:65]}...")
-        success = download_pollinations_image(prompt, file_path, width=width, height=height)
+        
+        # For the first image, always allow sleep if needed. For subsequent images,
+        # if not strict_ai and no API key, do not stall for 45s x N.
+        should_sleep = allow_sleep if idx > 0 else True
+        success = download_pollinations_image(
+            prompt, file_path, width=width, height=height, allow_sleep=should_sleep
+        )
+
         if success:
             visual_files.append(file_path)
             print(f"Visual {idx+1} ready ({os.path.getsize(file_path)//1024} KB)")
         else:
-            print(f"Failed to generate visual {idx+1}")
+            if not allow_sleep and len(visual_files) > 0:
+                needed = visual_count - len(visual_files)
+                print(f"\nPollinations free limit reached (1 img / 45s).")
+                print(f"Smart Hybrid Fast Mode: Visual 1 is custom AI. Instantly downloading {needed} high-definition tech visuals to finish without wait...")
+                break
+            else:
+                print(f"Failed to generate visual {idx+1}")
+
+    # If we need more visuals to reach visual_count, fill them with fast stock footage
+    if len(visual_files) < visual_count:
+        needed = visual_count - len(visual_files)
+        try:
+            if is_vertical:
+                import visuals
+                supplementary = visuals.get_visuals(topic, num_visuals=needed, script_text=script_text)
+            else:
+                import visuals_long
+                supplementary = visuals_long.get_visuals(topic, num_visuals=needed, script_text=script_text)
+            
+            if supplementary:
+                visual_files.extend(supplementary)
+        except Exception as e:
+            print(f"Warning during supplementary visual fetch: {e}")
 
     if not visual_files:
         print("Falling back to stock footage...")
-        import visuals
-        return visuals.get_visuals(topic, visual_count, script_text=script_text)
+        if is_vertical:
+            import visuals
+            return visuals.get_visuals(topic, visual_count, script_text=script_text)
+        else:
+            import visuals_long
+            return visuals_long.get_visuals(topic, visual_count, script_text=script_text)
 
-    print(f"Successfully generated {len(visual_files)} AI visuals.\n")
+    print(f"Successfully prepared {len(visual_files)} visuals.\n")
     return visual_files
 
 
