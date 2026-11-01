@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+import argparse
 import base64
 
 if hasattr(sys.stdout, 'reconfigure'):
@@ -41,11 +43,55 @@ def setup_credentials():
         except Exception as e:
             print(f"Warning: Could not decode TOKEN_PICKLE_BASE64: {e}")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="YouTube Long Video Automation")
+    parser.add_argument("--config", type=str, help="Path to JSON configuration file")
+    parser.add_argument("--topic", type=str, help="Custom topic for the video")
+    parser.add_argument("--script", type=str, help="Custom script text")
+    parser.add_argument("--script-file", type=str, help="Path to text file containing script")
+    parser.add_argument("--title", type=str, help="Custom YouTube video title")
+    parser.add_argument("--description", type=str, help="Custom YouTube video description")
+    parser.add_argument("--description-file", type=str, help="Path to text file containing description")
+    parser.add_argument("--thumbnail", type=str, help="Path to custom thumbnail image file")
+    parser.add_argument("--skip-upload", action="store_true", help="Generate video locally and skip YouTube upload")
+    return parser.parse_args()
+
 def main():
     """
     Main function to run the YouTube long-form video workflow.
     Creates horizontal format videos (1920x1080) for regular YouTube content.
     """
+    args = parse_args()
+    config = {}
+    if args.config and os.path.exists(args.config):
+        try:
+            with open(args.config, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not read config file {args.config}: {e}")
+
+    # Determine parameter values (CLI flags override config file)
+    custom_topic = args.topic or config.get("topic")
+    custom_script = args.script or config.get("script")
+    if args.script_file and os.path.exists(args.script_file):
+        try:
+            with open(args.script_file, 'r', encoding='utf-8') as f:
+                custom_script = f.read()
+        except Exception as e:
+            print(f"Warning: Could not read script file {args.script_file}: {e}")
+
+    custom_title = args.title or config.get("title")
+    custom_description = args.description or config.get("description")
+    if args.description_file and os.path.exists(args.description_file):
+        try:
+            with open(args.description_file, 'r', encoding='utf-8') as f:
+                custom_description = f.read()
+        except Exception as e:
+            print(f"Warning: Could not read description file {args.description_file}: {e}")
+
+    custom_thumbnail = args.thumbnail or config.get("thumbnail")
+    skip_upload = args.skip_upload or config.get("skip_upload", False)
+
     os.makedirs('assets', exist_ok=True)
     load_dotenv()
     setup_credentials()
@@ -55,22 +101,29 @@ def main():
     print("="*60 + "\n")
     total_steps = 9
     
-    print(f"[STEP 1/{total_steps}] 🔍 Finding trending topic for long-form video...")
-    print("Progress: [██░░░░░░░░] 11%")
-    try:
-        topic = topic_finder.get_trending_topic()
-        print("✅ Topic found successfully!")
-    except Exception as e:
-        print(f"⚠️  Could not get trending topic: {e}. Using fallback topic.")
-        topic = "The fascinating science behind everyday phenomena"
+    if custom_topic and custom_topic.strip():
+        topic = custom_topic.strip()
+        print(f"[STEP 1/{total_steps}] 📌 Using custom topic: {topic}\n")
+    else:
+        print(f"[STEP 1/{total_steps}] 🔍 Finding trending topic for long-form video...")
+        print("Progress: [██░░░░░░░░] 11%")
+        try:
+            topic = topic_finder.get_trending_topic()
+            print("✅ Topic found successfully!")
+        except Exception as e:
+            print(f"⚠️  Could not get trending topic: {e}. Using fallback topic.")
+            topic = "The fascinating science behind everyday phenomena"
+        print(f"📌 Topic: {topic}\n")
 
-    print(f"📌 Topic: {topic}\n")
-
-    print(f"[STEP 2/{total_steps}] 📝 Generating long-form script...")
-    print("Progress: [████░░░░░░] 22%")
-    script = script_generator_long.generate_long_script(topic)
-    print("✅ Script generated successfully!")
-    print(f"📄 Script preview: {script[:100]}...\n")
+    if custom_script and custom_script.strip():
+        script = custom_script.strip()
+        print(f"[STEP 2/{total_steps}] 📝 Using custom long-form script ({len(script)} characters)...\n")
+    else:
+        print(f"[STEP 2/{total_steps}] 📝 Generating long-form script...")
+        print("Progress: [████░░░░░░] 22%")
+        script = script_generator_long.generate_long_script(topic)
+        print("✅ Script generated successfully!")
+        print(f"📄 Script preview: {script[:100]}...\n")
 
     # Clean the script for the voiceover
     cleaned_script = re.sub(r"^(Here's|Here is).*?script.*?:\s*", '', script, flags=re.IGNORECASE)
@@ -153,13 +206,22 @@ def main():
     except Exception as e:
         print(f"⚠️  Warning: Could not generate .srt subtitles: {e}\n")
 
+    if skip_upload:
+        print(f"\n[STEP 8/{total_steps}] 🎬 Skipping YouTube upload (--skip-upload enabled).")
+        print("✓ Long-form video generated locally: assets/final_long_video.mp4")
+        print(f"\n[STEP 9/{total_steps}] ✅ COMPLETE!\n")
+        return
+
     print(f"[STEP 8/{total_steps}] ☁️  Uploading to YouTube...")
     print("Progress: [████████████████] 89%")
     print("⏳ This may take several minutes depending on your connection...")
     video_id = youtube_uploader_long.upload_long_video(
         "assets/final_long_video.mp4",
         topic,
-        cleaned_script
+        cleaned_script,
+        custom_title=custom_title,
+        custom_description=custom_description,
+        thumbnail_file=custom_thumbnail
     )
     if video_id:
         print(f"\n[STEP 9/{total_steps}] ✅ COMPLETE!")
