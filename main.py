@@ -48,7 +48,7 @@ def parse_args():
     parser.add_argument("--thumbnail", type=str, help="Path to custom thumbnail image file")
     parser.add_argument("--skip-upload", action="store_true", help="Generate video locally and skip YouTube upload")
     parser.add_argument("--ai-visuals", action="store_true", help="Generate visuals with Pollinations AI instead of stock footage")
-    parser.add_argument("--strict-ai", action="store_true", help="Force waiting for 100% pure AI visuals even without API key")
+    parser.add_argument("--strict-ai", action="store_true", help="Force waiting for 100%% pure AI visuals even without API key")
     return parser.parse_args()
 
 def main():
