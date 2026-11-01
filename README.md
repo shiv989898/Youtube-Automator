@@ -168,44 +168,54 @@ You do **not** need to create `token.pickle` manually. It is generated automatic
 
 You can run the project either with Python directly or with the included launcher scripts.
 
-### Option A: Run directly with Python
+### Option A: Run the Desktop Dashboard (Recommended)
 
-This is the most reliable option on any PC.
-
-#### Run Shorts
+Launch the visual dashboard where you can enter custom topics, titles, descriptions, scripts, thumbnails, and preview live logs:
 
 ```bash
+python gui.py
+```
+
+Or on Windows, simply double-click:
+```bat
+run_gui.bat
+```
+
+### Option B: Run directly with Python (CLI / Custom Parameters)
+
+You can run automated generation or provide custom values directly via flags:
+
+#### Run Shorts with custom parameters:
+```bash
+# Fully automated (trending topic & auto-generated metadata)
 python main.py
+
+# Custom topic and title
+python main.py --topic "The Secrets of Deep Ocean" --title "What Scientists Found in the Deep Ocean #Shorts"
+
+# Local render only without uploading to YouTube
+python main.py --skip-upload
+
+# With custom thumbnail
+python main.py --thumbnail "path/to/thumbnail.jpg"
 ```
 
-#### Run long-form
-
+#### Run long-form with custom parameters:
 ```bash
+# Fully automated
 python main_long.py
+
+# Custom topic, title, and local generation
+python main_long.py --topic "Quantum Physics Explained" --title "The Complete Guide to Quantum Physics" --skip-upload
 ```
 
-On macOS or Linux, if `python` does not point to the virtual environment interpreter, use:
+### Option C: Use the included Windows launcher files
 
-```bash
-python3 main.py
-python3 main_long.py
-```
+These work relative to the repository folder:
 
-### Option B: Use the included Windows launcher files
-
-These now work relative to the repository folder and are safe to use on any Windows PC after setup.
-
-#### Run Shorts on Windows
-
-```bat
-run_shorts.bat
-```
-
-#### Run long-form on Windows
-
-```bat
-run_long.bat
-```
+- **Launch Dashboard GUI**: `run_gui.bat`
+- **Run Shorts**: `run_shorts.bat`
+- **Run Long-form**: `run_long.bat`
 
 ## What happens when you run it
 
