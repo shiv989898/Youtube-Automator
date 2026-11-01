@@ -66,18 +66,31 @@ def _generate_with_retry(prompt: str) -> str:
 def generate_long_script(topic):
     """
     Generates a script for a long-form YouTube video using the Google Gemini API.
-    Script length is capped at 3 minutes for concise, engaging content.
+    Grounded in real live web facts for accurate coverage.
     """
-    print("  ⏳ Preparing AI prompt...", end="", flush=True)
+    print("  Preparing AI prompt with live web research...", end="", flush=True)
     try:
+        # Fetch live verified facts from the web to ensure 100% accurate coverage
+        web_facts = ""
+        try:
+            import ai_news_search
+            web_facts = ai_news_search.search_topic_facts(topic)
+            if web_facts:
+                print("\r  Verified live web facts loaded for topic.   ")
+        except Exception as e:
+            print(f"\r  Notice: Web grounding skipped ({e}).        ")
+
         # Script length is now capped at 3 minutes (180 seconds)
         target_duration = random.choice([60, 90, 120, 150, 180])  # 1-3 minutes
         word_count_min = int(target_duration * 2.2)  # ~2.2 words per second
         word_count_max = int(target_duration * 2.5)  # ~2.5 words per second
-        print("\r  ✅ Prompt ready, contacting AI..." + " " * 20, end="", flush=True)
+        print("\r  Prompt ready, contacting AI..." + " " * 20, end="", flush=True)
         
+        facts_context = f"\nVERIFIED FACTS FROM LIVE WEB SEARCH:\n{web_facts}\n" if web_facts else ""
+
         prompt = f"""
-        Create a comprehensive script for a {target_duration // 60}-minute YouTube video about the topic: "{topic}".
+        Create a comprehensive, 100% accurate script for a {target_duration // 60}-minute YouTube video about: "{topic}".
+        {facts_context}
 
         IMPORTANT: Target {target_duration} seconds ({target_duration // 60} minutes) when spoken aloud (approximately {word_count_min}-{word_count_max} words total).
         

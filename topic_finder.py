@@ -704,6 +704,15 @@ FALLBACK_TOPICS = [
 
 
 def get_trending_topic():
-    """Return a topic from the expanded fallback list."""
-    print("Using curated fallback topics only.")
+    """Fetch fresh breaking AI news from the live web, or fall back to curated topics."""
+    try:
+        import ai_news_search
+        live_topic = ai_news_search.get_trending_ai_topic()
+        if live_topic and len(live_topic) > 10:
+            print(f"Live web trending AI topic: {live_topic}")
+            return live_topic
+    except Exception as e:
+        print(f"Notice: Web news search unavailable ({e}). Using curated topic list.")
+
+    print("Using curated fallback topic pool.")
     return random.choice(FALLBACK_TOPICS)

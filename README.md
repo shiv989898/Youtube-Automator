@@ -24,14 +24,16 @@ Typical output files:
 
 ## Features
 
-- Topic generation for educational/fact-style content
-- AI script generation using Gemini
-- Voice generation with `edge-tts`, plus fallback to `gTTS` and `pyttsx3`
-- Stock video selection from Pexels and Pixabay
-- Music download and background audio support
-- Automatic video rendering with MoviePy
-- Automatic YouTube upload through the YouTube Data API
-- Windows automation helpers via batch files and PowerShell scripts
+- **Live AI News Web Search**: Real-time breaking AI news and technical releases fetched directly from the internet for 100% free with zero API keys.
+- **Accurate Fact-Grounded Scriptwriting**: Google Gemini generates scripts grounded in real live web search facts to prevent hallucinations.
+- **100% Free AI Visuals (Pollinations)**: Generates photorealistic AI images matching each scene in the script, animated with dynamic Ken Burns motion and pan/zoom effects.
+- **100% Free AI Thumbnail Generator**: Creates high-impact, click-worthy YouTube thumbnails with Pollinations and bold typography.
+- **Voice generation** with `edge-tts`, plus fallback to `gTTS` and `pyttsx3`
+- **Stock video selection** from Pexels and Pixabay as reliable fallback
+- **Music download** and background audio support
+- **Automatic video rendering** with MoviePy
+- **Automatic YouTube upload** through the YouTube Data API with custom metadata and thumbnails
+- **Modern Desktop Dashboard** (`gui.py`) with live console log streaming and custom parameter inputs
 
 ## Requirements
 

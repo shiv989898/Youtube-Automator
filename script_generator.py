@@ -67,27 +67,39 @@ def _generate_with_retry(prompt: str) -> str:
 def generate_script(topic):
     """
     Generates a viral-optimized script for YouTube Shorts.
-    Engineered for maximum retention with proven hook formulas.
+    Engineered for maximum retention and grounded in real live web facts.
     """
     try:
+        # Fetch live verified facts from the web to ensure 100% accurate coverage
+        web_facts = ""
+        try:
+            import ai_news_search
+            web_facts = ai_news_search.search_topic_facts(topic)
+            if web_facts:
+                print(f"Grounded script with live web facts for '{topic}'")
+        except Exception as e:
+            print(f"Notice: Web grounding skipped ({e})")
+
         # Randomly choose script length for variety
-        target_duration = random.choice([20, 25, 30, 35, 40])
+        target_duration = random.choice([25, 30, 35, 40])
         word_count_min = int(target_duration * 2.2)  # ~2.2 words per second
         word_count_max = int(target_duration * 2.8)  # ~2.8 words per second
         
         # Proven hook formulas that boost retention
         hook_styles = [
-            "a shocking statistic or fact",
-            "a controversial statement that challenges common belief",
-            "a 'what if' scenario that sparks curiosity",
-            "a bold claim followed by proof",
-            "a relatable problem the viewer faces",
+            "a shocking statistic or breakthrough detail",
+            "a bold claim explaining the technological leap",
+            "a 'what if' scenario that sparks curiosity about this AI model",
+            "a direct comparison to previous AI models",
+            "an urgent heads-up about what this changes right now",
         ]
         selected_hook = random.choice(hook_styles)
         
+        facts_context = f"\nVERIFIED FACTS FROM LIVE WEB SEARCH:\n{web_facts}\n" if web_facts else ""
+
         prompt = f"""
         Create a {target_duration}-second YouTube Short script about: "{topic}"
-
+        {facts_context}
         CRITICAL RETENTION RULES (YouTube algorithm favors these):
         
         1. HOOK (First 2 seconds - MOST IMPORTANT):

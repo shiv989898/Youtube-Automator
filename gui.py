@@ -290,8 +290,8 @@ class YouTubeAutomatorGUI(ctk.CTk):
         self.btn_browse_thumb = ctk.CTkButton(
             thumb_row,
             text="Browse...",
-            font=ctk.CTkFont(family="Segoe UI", size=12),
-            width=80,
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            width=70,
             height=36,
             fg_color="#27272a",
             hover_color="#3f3f46",
@@ -299,21 +299,46 @@ class YouTubeAutomatorGUI(ctk.CTk):
         )
         self.btn_browse_thumb.grid(row=0, column=1, padx=(0, 4))
 
+        self.btn_gen_thumb = ctk.CTkButton(
+            thumb_row,
+            text="AI Generate (Free)",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            width=120,
+            height=36,
+            fg_color="#27272a",
+            hover_color="#3f3f46",
+            command=self._async_generate_thumbnail
+        )
+        self.btn_gen_thumb.grid(row=0, column=2, padx=(0, 4))
+
         self.btn_clear_thumb = ctk.CTkButton(
             thumb_row,
             text="Clear",
-            font=ctk.CTkFont(family="Segoe UI", size=12),
-            width=60,
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            width=50,
             height=36,
             fg_color="#27272a",
             hover_color="#3f3f46",
             command=self._clear_thumbnail
         )
-        self.btn_clear_thumb.grid(row=0, column=2)
+        self.btn_clear_thumb.grid(row=0, column=3)
 
         # 8. Options Checkboxes
         options_frame = ctk.CTkFrame(self.left_frame, fg_color="transparent")
         options_frame.grid(row=14, column=0, sticky="ew", pady=(6, 14))
+
+        self.ai_visuals_var = ctk.BooleanVar(value=True)
+        self.chk_ai_visuals = ctk.CTkCheckBox(
+            options_frame,
+            text="Use Pollinations AI visuals (100% Free, custom to video topic)",
+            variable=self.ai_visuals_var,
+            font=ctk.CTkFont(family="Segoe UI", size=12),
+            checkbox_height=20,
+            checkbox_width=20,
+            fg_color="#2563eb",
+            hover_color="#1d4ed8"
+        )
+        self.chk_ai_visuals.pack(anchor="w", pady=(0, 6))
 
         self.skip_upload_var = ctk.BooleanVar(value=False)
         self.chk_skip_upload = ctk.CTkCheckBox(
@@ -482,12 +507,17 @@ class YouTubeAutomatorGUI(ctk.CTk):
     # --- Async Assistance Buttons ---
     def _async_fetch_trending_topic(self):
         def worker():
-            self.btn_fetch_topic.configure(state="disabled", text="Fetching...")
+            self.btn_fetch_topic.configure(state="disabled", text="Searching...")
             try:
-                topic = topic_finder.get_trending_topic()
+                import ai_news_search
+                topic = ai_news_search.get_trending_ai_topic()
                 self.after(0, lambda: self._apply_topic(topic))
             except Exception as e:
-                self.after(0, lambda: self.write_to_console(f"Could not fetch trending topic: {e}\n"))
+                try:
+                    topic = topic_finder.get_trending_topic()
+                    self.after(0, lambda: self._apply_topic(topic))
+                except Exception as ex:
+                    self.after(0, lambda: self.write_to_console(f"Could not fetch trending topic: {ex}\n"))
             finally:
                 self.after(0, lambda: self.btn_fetch_topic.configure(state="normal", text="Fetch Trending"))
         threading.Thread(target=worker, daemon=True).start()
@@ -495,7 +525,7 @@ class YouTubeAutomatorGUI(ctk.CTk):
     def _apply_topic(self, topic: str):
         self.entry_topic.delete(0, "end")
         self.entry_topic.insert(0, topic)
-        self.write_to_console(f"[Assistant] Trending topic retrieved: {topic}\n")
+        self.write_to_console(f"[Assistant] Live web AI topic retrieved: {topic}\n")
 
     def _async_generate_title(self):
         topic = self.entry_topic.get().strip()
@@ -585,6 +615,39 @@ class YouTubeAutomatorGUI(ctk.CTk):
         self.textbox_script.insert("1.0", script)
         self.write_to_console(f"[Assistant] Generated script ready ({len(script)} characters).\n")
 
+    def _async_generate_thumbnail(self):
+        topic = self.entry_topic.get().strip()
+        if not topic:
+            messagebox.showinfo("Topic Required", "Please enter or fetch a topic first to generate an AI thumbnail.")
+            return
+
+        title = self.entry_title.get().strip()
+        is_long = "Long" in self.format_var.get()
+        out_name = "assets/thumbnail_long.jpg" if is_long else "assets/thumbnail_shorts.jpg"
+
+        def worker():
+            self.btn_gen_thumb.configure(state="disabled", text="Generating...")
+            try:
+                import thumbnail_generator
+                thumb_path = thumbnail_generator.create_ai_thumbnail(
+                    topic,
+                    output_path=out_name,
+                    custom_headline=title,
+                    is_vertical=False
+                )
+                self.after(0, lambda: self._apply_thumbnail(thumb_path))
+            except Exception as e:
+                self.after(0, lambda: self.write_to_console(f"Error generating thumbnail: {e}\n"))
+            finally:
+                self.after(0, lambda: self.btn_gen_thumb.configure(state="normal", text="AI Generate (Free)"))
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _apply_thumbnail(self, path: str):
+        self.entry_thumb.delete(0, "end")
+        self.entry_thumb.insert(0, path)
+        self.write_to_console(f"[Assistant] Custom AI thumbnail generated with Pollinations: {path}\n")
+
     # --- Job Execution ---
     def start_generation(self):
         if self.is_running:
@@ -601,6 +664,7 @@ class YouTubeAutomatorGUI(ctk.CTk):
         thumbnail = self.entry_thumb.get().strip()
         skip_upload = self.skip_upload_var.get()
         loop_mode = self.loop_mode_var.get()
+        ai_visuals = self.ai_visuals_var.get()
 
         # Build job configuration dictionary
         job_config = {
@@ -610,7 +674,8 @@ class YouTubeAutomatorGUI(ctk.CTk):
             "description": description,
             "script": script,
             "thumbnail": thumbnail,
-            "skip_upload": skip_upload
+            "skip_upload": skip_upload,
+            "ai_visuals": ai_visuals
         }
 
         # Save to assets/job_config.json for bulletproof multi-line argument passing
@@ -632,6 +697,7 @@ class YouTubeAutomatorGUI(ctk.CTk):
             self.write_to_console(f"• Title: {title}\n")
         if thumbnail:
             self.write_to_console(f"• Custom Thumbnail: {thumbnail}\n")
+        self.write_to_console(f"• Visuals: {'Pollinations AI (Custom Images)' if ai_visuals else 'Stock Footage (Pexels/Pixabay)'}\n")
         if skip_upload:
             self.write_to_console(f"• Upload: Local Generation Only (Upload Skipped)\n")
 

@@ -47,6 +47,7 @@ def parse_args():
     parser.add_argument("--description-file", type=str, help="Path to text file containing description")
     parser.add_argument("--thumbnail", type=str, help="Path to custom thumbnail image file")
     parser.add_argument("--skip-upload", action="store_true", help="Generate video locally and skip YouTube upload")
+    parser.add_argument("--ai-visuals", action="store_true", help="Generate visuals with Pollinations AI instead of stock footage")
     return parser.parse_args()
 
 def main():
@@ -83,6 +84,7 @@ def main():
 
     custom_thumbnail = args.thumbnail or config.get("thumbnail")
     skip_upload = args.skip_upload or config.get("skip_upload", False)
+    use_ai_visuals = args.ai_visuals or config.get("ai_visuals", True)
 
     os.makedirs('assets', exist_ok=True)
     load_dotenv()
@@ -156,13 +158,26 @@ def main():
         print("Could not find background music.")
 
     print("Gathering visuals...")
-    # Pass target duration to avoid downloading unnecessarily long videos
-    visual_files = visuals.get_visuals(
-        topic,
-        visual_count,
-        target_duration=voiceover_duration,
-        script_text=cleaned_script,
-    )
+    visual_files = []
+    if use_ai_visuals:
+        try:
+            import pollinations_visuals
+            visual_files = pollinations_visuals.get_ai_visuals(
+                topic,
+                visual_count,
+                is_vertical=True,
+                script_text=cleaned_script
+            )
+        except Exception as e:
+            print(f"Notice: AI visual generation fallback ({e}). Using stock footage...")
+
+    if not visual_files:
+        visual_files = visuals.get_visuals(
+            topic,
+            visual_count,
+            target_duration=voiceover_duration,
+            script_text=cleaned_script,
+        )
     print(f"Found {len(visual_files)} visuals.")
 
     if not visual_files:
@@ -173,8 +188,24 @@ def main():
     video_creator.create_video(visual_files, voiceover_file, "assets/final_video.mp4", music_file, cleaned_script)
     print("Video created successfully: assets/final_video.mp4")
 
+    # Generate custom AI thumbnail with Pollinations if none provided
+    if not custom_thumbnail or not os.path.exists(custom_thumbnail):
+        try:
+            import thumbnail_generator
+            print("Creating custom AI thumbnail with Pollinations...")
+            custom_thumbnail = thumbnail_generator.create_ai_thumbnail(
+                topic,
+                output_path="assets/thumbnail_shorts.jpg",
+                custom_headline=custom_title,
+                is_vertical=False
+            )
+        except Exception as e:
+            print(f"Notice: Automatic thumbnail creation skipped ({e})")
+
     if skip_upload:
-        print("✓ Video generated successfully: assets/final_video.mp4")
+        print("Video generated successfully: assets/final_video.mp4")
+        if custom_thumbnail and os.path.exists(custom_thumbnail):
+            print(f"Thumbnail ready: {custom_thumbnail}")
         print("Skipping YouTube upload (--skip-upload enabled).")
         return
 
