@@ -28,3 +28,6 @@ gTTS
 
 # For Gemini API
 google-generativeai
+
+# For Desktop UI
+customtkinter>=6.0.0

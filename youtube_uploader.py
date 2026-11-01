@@ -142,13 +142,20 @@ def generate_rich_description(topic, script_preview):
 """
     return description
 
-def upload_to_youtube(video_file, topic, script_text):
+def upload_to_youtube(video_file, topic, script_text, custom_title=None, custom_description=None, thumbnail_file=None):
     """
-    Uploads a video to YouTube with engaging metadata.
+    Uploads a video to YouTube with engaging or custom metadata.
     """
-    # Generate engaging metadata
-    title = generate_engaging_title(topic)
-    description = generate_rich_description(topic, script_text)
+    # Use custom metadata if provided, otherwise generate automatically
+    if custom_title and custom_title.strip():
+        title = custom_title.strip()
+    else:
+        title = generate_engaging_title(topic)
+
+    if custom_description and custom_description.strip():
+        description = custom_description.strip()
+    else:
+        description = generate_rich_description(topic, script_text)
     
     # Generate tags for better discoverability
     topic_words = topic.lower().replace("the ", "").replace("a ", "").split()
@@ -211,7 +218,21 @@ def upload_to_youtube(video_file, topic, script_text):
         if status:
             print(f"Uploaded {int(status.progress() * 100)}%")
 
+    video_id = response.get('id')
     print(f"📺 Video uploaded successfully!")
     print(f"📌 Title: {title}")
     print(f"🏷️ Tags: {', '.join(tags[:5])}")
-    return response.get('id')
+
+    # Upload custom thumbnail if specified
+    if thumbnail_file and os.path.exists(thumbnail_file) and video_id:
+        try:
+            print(f"🖼️ Uploading custom thumbnail: {thumbnail_file}...")
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(thumbnail_file)
+            ).execute()
+            print("✓ Custom thumbnail uploaded successfully!")
+        except Exception as e:
+            print(f"⚠️ Could not set custom thumbnail ({e}). Note: Custom thumbnails require a verified YouTube channel.")
+
+    return video_id
