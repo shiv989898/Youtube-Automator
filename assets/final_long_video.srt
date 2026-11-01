@@ -1,123 +1,135 @@
 1
-00:00:00,000 --> 00:00:02,102
-Host: You’ve been chasing happiness the wrong
+00:00:00,000 --> 00:00:02,070
+Host: A homing pigeon can be released
 
 2
-00:00:02,102 --> 00:00:04,205
-way your entire life.
+00:00:02,070 --> 00:00:04,141
+hundreds of miles from home and return
 
 3
-00:00:04,205 --> 00:00:06,307
-Host: Today, we’re decoding the science of
+00:00:04,141 --> 00:00:06,211
+with pinpoint accuracy, but how do they
 
 4
-00:00:06,307 --> 00:00:08,410
-well-being to reveal why your brain is
+00:00:06,211 --> 00:00:08,282
+actually do it?
 
 5
-00:00:08,410 --> 00:00:10,512
-actually wired for satisfaction, not constant joy.
+00:00:08,282 --> 00:00:10,352
+Host: We’ll uncover the biological "GPS" systems
 
 6
-00:00:10,512 --> 00:00:12,615
-Host: First, understand the "hedonic treadmill." Humans
+00:00:10,352 --> 00:00:12,423
+hidden inside these birds that allow them
 
 7
-00:00:12,615 --> 00:00:14,718
-naturally return to a baseline level of
+00:00:12,423 --> 00:00:14,494
+to master navigation.
 
 8
-00:00:14,718 --> 00:00:16,820
-happiness regardless of positive or negative life
+00:00:14,494 --> 00:00:16,564
+Host: First, pigeons use the Earth’s magnetic
 
 9
-00:00:16,820 --> 00:00:18,923
-events.
+00:00:16,564 --> 00:00:18,635
+field as a map.
 
 10
-00:00:18,923 --> 00:00:21,025
-If you win the lottery, your excitement
+00:00:18,635 --> 00:00:20,705
+They possess tiny magnetic particles in their
 
 11
-00:00:21,025 --> 00:00:23,128
-eventually fades because your brain recalibrates.
+00:00:20,705 --> 00:00:22,776
+beaks that function like a compass, sensing
 
 12
-00:00:23,128 --> 00:00:25,230
-True fulfillment isn't about reaching a destination;
+00:00:22,776 --> 00:00:24,847
+the planet's intensity and inclination.
 
 13
-00:00:25,230 --> 00:00:27,333
-it’s about managing expectations.
+00:00:24,847 --> 00:00:26,917
+It’s a literal internal sensor.
 
 14
-00:00:27,333 --> 00:00:29,436
-Host: Next, consider the "social connection" pillar.
+00:00:26,917 --> 00:00:28,988
+Host: But magnets aren't enough; they also
 
 15
-00:00:29,436 --> 00:00:31,538
-Studies show that the quality of your
+00:00:28,988 --> 00:00:31,058
+use visual landmarks.
 
 16
-00:00:31,538 --> 00:00:33,641
-relationships is the single greatest predictor of
+00:00:31,058 --> 00:00:33,129
+These birds create mental maps of highways,
 
 17
-00:00:33,641 --> 00:00:35,743
-long-term health.
+00:00:33,129 --> 00:00:35,200
+coastlines, and even city grids.
 
 18
-00:00:35,743 --> 00:00:37,846
-We aren't built for isolation; we are
+00:00:35,200 --> 00:00:37,270
+Scientists have discovered that pigeons will actually
 
 19
-00:00:37,846 --> 00:00:39,949
-biological creatures designed for community.
+00:00:37,270 --> 00:00:39,341
+follow human-made roads, choosing to "commute" rather
 
 20
-00:00:39,949 --> 00:00:42,051
-Host: Surprisingly, happiness is a skill, not
+00:00:39,341 --> 00:00:41,411
+than fly in a straight line.
 
 21
-00:00:42,051 --> 00:00:44,154
-a trait.
+00:00:41,411 --> 00:00:43,482
+Host: Surprisingly, they can even smell their
 
 22
-00:00:44,154 --> 00:00:46,256
-By practicing gratitude, you literally rewire your
+00:00:43,482 --> 00:00:45,552
+way home.
 
 23
-00:00:46,256 --> 00:00:48,359
-neural pathways toward positivity.
+00:00:45,552 --> 00:00:47,623
+They use an "olfactory map" to detect
 
 24
-00:00:48,359 --> 00:00:50,461
-Want to know the specific three-minute habit
+00:00:47,623 --> 00:00:49,694
+environmental scents.
 
 25
-00:00:50,461 --> 00:00:52,564
-that creates lasting neuroplasticity?
+00:00:49,694 --> 00:00:51,764
+But wait—how do they handle cloudy days
 
 26
-00:00:52,564 --> 00:00:54,667
-Host: You control your internal state more
+00:00:51,764 --> 00:00:53,835
+when the sun is hidden?
 
 27
-00:00:54,667 --> 00:00:56,769
-than your external circumstances.
+00:00:53,835 --> 00:00:55,905
+Host: Pigeons combine magnetism, vision, and smell
 
 28
-00:00:56,769 --> 00:00:58,872
-Happiness is a practice of perspective, not
+00:00:55,905 --> 00:00:57,976
+into a multi-layered navigation suite that far
 
 29
-00:00:58,872 --> 00:01:00,974
-a collection of achievements.
+00:00:57,976 --> 00:01:00,047
+surpasses human technology.
 
 30
-00:01:00,974 --> 00:01:03,077
-Host: Subscribe for more science-backed insights into
+00:01:00,047 --> 00:01:02,117
+By syncing these senses, they guarantee a
 
 31
-00:01:03,077 --> 00:01:05,179
-your mind!
+00:01:02,117 --> 00:01:04,188
+safe arrival home regardless of the conditions.
+
+32
+00:01:04,188 --> 00:01:06,258
+Host: Now you know their secret.
+
+33
+00:01:06,258 --> 00:01:08,329
+If you found this flight plan fascinating,
+
+34
+00:01:08,329 --> 00:01:10,400
+hit subscribe for more daily mysteries decoded!
