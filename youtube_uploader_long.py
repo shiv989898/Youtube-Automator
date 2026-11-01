@@ -209,5 +209,19 @@ def upload_long_video(video_file, topic, description, custom_title=None, custom_
             print(f"⚠️  Network error ({type(e).__name__}), retrying in {wait:.1f}s... (attempt {retry}/{MAX_RETRIES})")
             time.sleep(wait)
     
-    print(f"Upload complete! Video ID: {response['id']}")
-    return response['id']
+    video_id = response['id']
+    print(f"Upload complete! Video ID: {video_id}")
+    
+    # Upload custom thumbnail if specified
+    if thumbnail_file and os.path.exists(thumbnail_file) and video_id:
+        try:
+            print(f"Uploading custom thumbnail: {thumbnail_file}...")
+            youtube.thumbnails().set(
+                videoId=video_id,
+                media_body=MediaFileUpload(thumbnail_file)
+            ).execute()
+            print("✓ Custom thumbnail uploaded successfully!")
+        except Exception as e:
+            print(f"⚠️ Could not set custom thumbnail ({e}). Note: Custom thumbnails require a verified YouTube channel.")
+
+    return video_id

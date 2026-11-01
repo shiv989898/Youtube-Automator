@@ -1,4 +1,7 @@
 import os
+import sys
+import json
+import argparse
 import base64
 from dotenv import load_dotenv
 import topic_finder
@@ -33,26 +36,77 @@ def setup_credentials():
         except Exception as e:
             print(f"Warning: Could not decode TOKEN_PICKLE_BASE64: {e}")
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="YouTube Shorts Automation")
+    parser.add_argument("--config", type=str, help="Path to JSON configuration file")
+    parser.add_argument("--topic", type=str, help="Custom topic for the video")
+    parser.add_argument("--script", type=str, help="Custom script text")
+    parser.add_argument("--script-file", type=str, help="Path to text file containing script")
+    parser.add_argument("--title", type=str, help="Custom YouTube video title")
+    parser.add_argument("--description", type=str, help="Custom YouTube video description")
+    parser.add_argument("--description-file", type=str, help="Path to text file containing description")
+    parser.add_argument("--thumbnail", type=str, help="Path to custom thumbnail image file")
+    parser.add_argument("--skip-upload", action="store_true", help="Generate video locally and skip YouTube upload")
+    return parser.parse_args()
+
 def main():
     """
     Main function to run the YouTube Shorts workflow.
     """
+    args = parse_args()
+    config = {}
+    if args.config and os.path.exists(args.config):
+        try:
+            with open(args.config, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+        except Exception as e:
+            print(f"Warning: Could not read config file {args.config}: {e}")
+
+    # Determine parameter values (CLI flags override config file)
+    custom_topic = args.topic or config.get("topic")
+    custom_script = args.script or config.get("script")
+    if args.script_file and os.path.exists(args.script_file):
+        try:
+            with open(args.script_file, 'r', encoding='utf-8') as f:
+                custom_script = f.read()
+        except Exception as e:
+            print(f"Warning: Could not read script file {args.script_file}: {e}")
+
+    custom_title = args.title or config.get("title")
+    custom_description = args.description or config.get("description")
+    if args.description_file and os.path.exists(args.description_file):
+        try:
+            with open(args.description_file, 'r', encoding='utf-8') as f:
+                custom_description = f.read()
+        except Exception as e:
+            print(f"Warning: Could not read description file {args.description_file}: {e}")
+
+    custom_thumbnail = args.thumbnail or config.get("thumbnail")
+    skip_upload = args.skip_upload or config.get("skip_upload", False)
+
     os.makedirs('assets', exist_ok=True)
     load_dotenv()
     setup_credentials()
 
-    print("Finding trending topic...")
-    try:
-        topic = topic_finder.get_trending_topic()
-    except Exception as e:
-        print(f"Could not get trending topic: {e}. Using fallback topic.")
-        topic = "The history of the internet"
+    if custom_topic and custom_topic.strip():
+        topic = custom_topic.strip()
+        print(f"Using custom topic: {topic}")
+    else:
+        print("Finding trending topic...")
+        try:
+            topic = topic_finder.get_trending_topic()
+        except Exception as e:
+            print(f"Could not get trending topic: {e}. Using fallback topic.")
+            topic = "The history of the internet"
+        print(f"Trending topic: {topic}")
 
-    print(f"Trending topic: {topic}")
-
-    print("Generating script...")
-    script = script_generator.generate_script(topic)
-    print(f"Script:\n{script}")
+    if custom_script and custom_script.strip():
+        script = custom_script.strip()
+        print(f"Using custom script ({len(script)} chars).")
+    else:
+        print("Generating script...")
+        script = script_generator.generate_script(topic)
+        print(f"Script:\n{script}")
 
     # Clean the script for the voiceover by removing cues and extra formatting
     # Remove introductory lines like "Here's a 60-second YouTube Short script on..."
@@ -119,11 +173,19 @@ def main():
     video_creator.create_video(visual_files, voiceover_file, "assets/final_video.mp4", music_file, cleaned_script)
     print("Video created successfully: assets/final_video.mp4")
 
+    if skip_upload:
+        print("✓ Video generated successfully: assets/final_video.mp4")
+        print("Skipping YouTube upload (--skip-upload enabled).")
+        return
+
     print("Uploading to YouTube...")
     video_id = youtube_uploader.upload_to_youtube(
         "assets/final_video.mp4",
         topic,
-        cleaned_script
+        cleaned_script,
+        custom_title=custom_title,
+        custom_description=custom_description,
+        thumbnail_file=custom_thumbnail
     )
     if video_id:
         print(f"Upload successful! Video ID: {video_id}")
